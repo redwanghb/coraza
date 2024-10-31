@@ -89,6 +89,9 @@ type Transaction struct {
 	// Handles response body buffers
 	responseBodyBuffer *BodyBuffer
 
+	// 新增针对SSE内容的缓存，用于存储LLM服务器返回的答案内容
+	responseBodyLLMContent *BodyBuffer
+
 	// Rules with this id are going to be skipped while processing a phase
 	ruleRemoveByID []int
 
@@ -1138,6 +1141,51 @@ func (tx *Transaction) WriteResponseBody(b []byte) (*types.Interruption, int, er
 		return nil, 0, nil
 	}
 
+	// TODO 新增SSE响应体中，LLM回答内容的缓存；
+	// 如果缓存空间达到上限，或者要缓存的内容大小超过缓存空间剩余的大小，清理要存入内容2倍大小的空间，如果2倍大小超过缓存上限
+	// 清理1倍大小的空间
+	if tx.variables.responseContentType.Get() == "appliacation/x-ndjson" {
+		buf := new(strings.Builder)
+		_, err := buf.Write(b)
+		if err != nil {
+			tx.debugLogger.Error().Err(err)
+		}
+		// 提取LLM回答的内容
+		ans, ok := llmguard.ResponseBodyExtract(buf.String())
+		if ok {
+			ansByte := []byte(ans)
+			leftLength := tx.ResponseBodyLimit - tx.responseBodyLLMContent.length
+			// 判断tx.responseBodyLLMContent缓存长度空间是否足够
+			if tx.responseBodyLLMContent.length == tx.ResponseBodyLimit || int64(len(ansByte)) >= leftLength {
+				tmpBytes := tx.responseBodyLLMContent.buffer.Bytes()
+				tx.responseBodyLLMContent.Reset()
+				// 如果2倍长度限制小于缓存大小，清空2倍的空间
+				if int64(2*len(ansByte)) < tx.ResponseBodyLimit {
+					tmpBytes = tmpBytes[2*len(ansByte):]
+				} else {
+					// 清空1倍的空间
+					tmpBytes = tmpBytes[len(ansByte):]
+				}
+				tx.responseBodyBuffer.Write(tmpBytes)
+			}
+			tx.responseBodyBuffer.Write(ansByte)
+		}
+
+		//组合答案并做LLMGuard回答内容检查
+		ansPartial := new(strings.Builder)
+		ansPartial.Write(tx.responseBodyLLMContent.buffer.Bytes())
+		fmt.Printf("debug transaction responseBodyLLMContent is %s\n", ansPartial.String())
+		detection, _ := llmguard.DetectAnswer("", ansPartial.String())
+		if detection {
+			tx.interruption = &types.Interruption{
+				RuleID: 90002,
+				Action: "deny",
+				Status: 403,
+			}
+			return tx.interruption, 0, nil
+		}
+	}
+
 	if tx.ResponseBodyLimit == tx.responseBodyBuffer.length {
 		// tx.ResponseBodyLimit will never be zero so if this happened, we have an
 		// interruption for sure.
@@ -1558,6 +1606,10 @@ func (tx *Transaction) Close() error {
 	}
 	if err := tx.responseBodyBuffer.Reset(); err != nil {
 		errs = append(errs, fmt.Errorf("reseting response body buffer: %v", err))
+	}
+	// 新增清空tx.responseBodyLLMContent缓存
+	if err := tx.responseBodyLLMContent.Reset(); err != nil {
+		errs = append(errs, fmt.Errorf("reseting response body llm content buffer: %v", err))
 	}
 
 	if tx.IsInterrupted() {

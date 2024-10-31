@@ -18,8 +18,9 @@ var (
 	CONFIGPATH = "llmcontentpath.json"
 	//配置各大模型API框架支持的content-type
 	ContentTypes = []string{
-		"aplication/json",
+		"application/json",
 		"application/x-ndjson",
+		"application/x-www-form-urlencoded",
 	}
 	MaxIdleConns        = 10000
 	MaxIdleConnsPerHost = 10000
@@ -81,6 +82,7 @@ func initLlmGuardClient() {
 			},
 		},
 		debuglog: debuglog.Noop(),
+		config:   &Config{},
 	}
 }
 
@@ -90,7 +92,7 @@ func FileExists(path string) bool {
 }
 
 type Config struct {
-	Address  string    `json:"apihost"`
+	Address  string    `json:"address"`
 	LLMPaths []LLMPath `json:"llmpaths"`
 }
 
@@ -138,6 +140,7 @@ func RequestBodyExtract(data string) (string, bool) {
 	return "", false
 }
 
+// 输入json结构体字符串，然后从中提取符合支持的大模型回答json结构体里的答案
 func ResponseBodyExtract(data string) (string, bool) {
 	for _, jsonPath := range ResponsePaths {
 		result := gjson.Get(data, jsonPath)

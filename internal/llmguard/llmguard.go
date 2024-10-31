@@ -117,6 +117,17 @@ func (lor *LLMGuardOutputRequest) AddScannerSuppress(scanner Scanner) {
 	lor.Scanners_Suppress = append(lor.Scanners_Suppress, scanner)
 }
 
+func (lor *LLMGuardOutputRequest) RemoveScanner(scanner Scanner) {
+	if len(lor.Scanners_Suppress) == 0 {
+		return
+	}
+	for i, sc := range lor.Scanners_Suppress {
+		if sc == scanner {
+			lor.Scanners_Suppress = append(lor.Scanners_Suppress[:i], lor.Scanners_Suppress[i+1:]...)
+		}
+	}
+}
+
 func (lor *LLMGuardOutputRequest) RemoveFromScannerList(scanner Scanner) {
 	lor.Scanners_Suppress = RemoveFromScannerList(scanner)
 }
@@ -200,7 +211,7 @@ const (
 	RESAPIPATH = "/scan/output"
 )
 
-// 对外提供大模型检测调用接口
+// 对外提供大模型检测调用接口，用于请求体检测
 func DetectQuestion(reqBody string) (bool, ScannersResult) {
 	//基于请求体内容提取问题
 	question, ok := ContentExtractFromJSONDATA(reqBody, REQUESTBODY)
@@ -211,7 +222,8 @@ func DetectQuestion(reqBody string) (bool, ScannersResult) {
 	url := LlmGuardClient.config.Address + REQAPIPATH
 	//调用接口返回结果
 	promptRequest := &LLMGuardPromptRequest{
-		Prompt: question,
+		Prompt:            question,
+		Scanners_Suppress: []Scanner{},
 	}
 	//提取结果，判定黑白，如果是黑就返回true，是白就返回false，如果是黑，需要返回命中了什么检测
 	res, err := LLMguardScanWithTransport(url, promptRequest)
@@ -221,5 +233,29 @@ func DetectQuestion(reqBody string) (bool, ScannersResult) {
 	if !res.Valid() {
 		return true, res.Scanners
 	}
+	return false, res.Scanners
+}
+
+// TODO 对外提供大模型检测接口，检测回答的内容
+func DetectAnswer(req string, ans string) (bool, ScannersResult) {
+	//调用接口地址url
+	url := LlmGuardClient.config.Address + RESAPIPATH
+
+	//调用接口返回结果
+	outputRequest := &LLMGuardOutputRequest{
+		Prompt:            req,
+		Output:            ans,
+		Scanners_Suppress: []Scanner{},
+	}
+
+	//提取结果，判定黑白，如果是黑就返回true，是白就返回false，如果是黑，需要返回命中了什么检测
+	res, err := LLMguardScanWithTransport(url, outputRequest)
+	if err != nil {
+		return false, ScannersResult{}
+	}
+	if !res.Valid() {
+		return true, res.Scanners
+	}
+
 	return false, res.Scanners
 }

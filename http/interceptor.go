@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/redwanghb/coraza/v3/types"
 )
@@ -184,6 +185,7 @@ func wrap(w http.ResponseWriter, r *http.Request, tx types.Transaction) (
 			// as next step is write into the response writer (triggering a 200 in the
 			// response status code.)
 			i.flushWriteHeader()
+			time.Sleep(time.Second * 10)
 			if _, err := io.Copy(w, reader); err != nil {
 				return fmt.Errorf("failed to copy the response body: %v", err)
 			}

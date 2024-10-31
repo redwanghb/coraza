@@ -4,6 +4,10 @@
         {
             "request": "messages.0.content",
             "response": "message.content"
+        },
+        {
+            "request": "prompt",
+            "response": "response"
         }
     ]
 }

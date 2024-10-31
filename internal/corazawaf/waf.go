@@ -220,6 +220,13 @@ func (w *WAF) newTransaction(opts Options) *Transaction {
 			Limit:       w.ResponseBodyLimit,
 		})
 
+		// 新增初始化tx.responseBodyLLMContent
+		tx.responseBodyLLMContent = NewBodyBuffer(types.BodyBufferOptions{
+			TmpPath:     w.TmpDir,
+			MemoryLimit: w.ResponseBodyLimit,
+			Limit:       w.ResponseBodyLimit,
+		})
+
 		tx.variables = *NewTransactionVariables()
 		tx.transformationCache = map[transformationKey]*transformationValue{}
 	}
