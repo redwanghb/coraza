@@ -12,7 +12,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/redwanghb/coraza/v3/types"
 )
@@ -95,7 +94,9 @@ func (i *rwInterceptor) Write(b []byte) (int, error) {
 	if i.tx.IsResponseBodyAccessible() && i.tx.IsResponseBodyProcessable() {
 		// we only buffer the response body if we are going to access
 		// to it, otherwise we just send it to the response writer.
-		it, n, err := i.tx.WriteResponseBody(b)
+		// 为了支持SSE的流式返回处理，增加HTTP.ResponseWriter入参，用于快速将服务器返回内容流式返回给客户端
+		it, n, err := i.tx.WriteResponseBody(b, i.w)
+		// it, n, err := i.tx.WriteResponseBody(b)
 		if it != nil {
 			// if there is an interruption we must clean the headers and override the status code
 			i.cleanHeaders()
@@ -185,7 +186,6 @@ func wrap(w http.ResponseWriter, r *http.Request, tx types.Transaction) (
 			// as next step is write into the response writer (triggering a 200 in the
 			// response status code.)
 			i.flushWriteHeader()
-			time.Sleep(time.Second * 10)
 			if _, err := io.Copy(w, reader); err != nil {
 				return fmt.Errorf("failed to copy the response body: %v", err)
 			}

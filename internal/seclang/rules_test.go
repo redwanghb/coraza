@@ -442,7 +442,7 @@ func TestTxIssue147(t *testing.T) {
 	tx.ProcessResponseHeaders(200, "HTTP/1.1")
 
 	if tx.IsResponseBodyProcessable() {
-		if it, _, err := tx.WriteResponseBody([]byte("#!/usr/bin/python")); it != nil || err != nil {
+		if it, _, err := tx.WriteResponseBody([]byte("#!/usr/bin/python"), nil); it != nil || err != nil {
 			t.Error(err)
 		}
 

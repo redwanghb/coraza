@@ -469,7 +469,7 @@ func TestAuditLog(t *testing.T) {
 
 var responseBodyWriters = map[string]func(tx *Transaction, body string) (*types.Interruption, int, error){
 	"WriteResponsequestBody": func(tx *Transaction, body string) (*types.Interruption, int, error) {
-		return tx.WriteResponseBody([]byte(body))
+		return tx.WriteResponseBody([]byte(body), nil)
 	},
 	"ReadResponseBodyFromKnownLen": func(tx *Transaction, body string) (*types.Interruption, int, error) {
 		return tx.ReadResponseBodyFrom(strings.NewReader(body))
@@ -1129,7 +1129,7 @@ func TestTxPhase4Magic(t *testing.T) {
 	tx.ProcessRequestHeaders()
 	_, _ = tx.ProcessRequestBody()
 	tx.ProcessResponseHeaders(200, "HTTP/1.1")
-	if it, _, err := tx.WriteResponseBody([]byte("more bytes")); it != nil || err != nil {
+	if it, _, err := tx.WriteResponseBody([]byte("more bytes"), nil); it != nil || err != nil {
 		t.Fatal(err)
 	}
 	if _, err := tx.ProcessResponseBody(); err != nil {
@@ -1666,7 +1666,7 @@ func TestResponseBodyForceProcessing(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx.ProcessResponseHeaders(200, "HTTP/1")
-	if _, _, err := tx.WriteResponseBody([]byte(`{"key":"value"}`)); err != nil {
+	if _, _, err := tx.WriteResponseBody([]byte(`{"key":"value"}`), nil); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := tx.ProcessResponseBody(); err != nil {

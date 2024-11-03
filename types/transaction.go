@@ -5,6 +5,7 @@ package types
 
 import (
 	"io"
+	"net/http"
 
 	"github.com/redwanghb/coraza/v3/debuglog"
 )
@@ -133,7 +134,9 @@ type Transaction interface {
 	// the body into the response body buffer.
 	//
 	// It returns the corresponding interruption, the number of bytes written an error if any.
-	WriteResponseBody(b []byte) (*Interruption, int, error)
+	// 兼容SSE流式返回，增加http.ResponseWriter用于流式返回给客户端内容
+	// WriteResponseBody(b []byte) (*Interruption, int, error)
+	WriteResponseBody(b []byte, w http.ResponseWriter) (*Interruption, int, error)
 
 	// ReadResponseBodyFrom attempts to write data into the body up to the buffer limit and
 	// returns an interruption if the body is bigger than the limit and the action is to

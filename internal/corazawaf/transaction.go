@@ -11,6 +11,7 @@ import (
 	"io"
 	"math"
 	"mime"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -1132,7 +1133,8 @@ func (tx *Transaction) IsResponseBodyProcessable() bool {
 // WriteResponseBody writes bytes from a slice of bytes into the response body,
 // it returns an interruption if the writing bytes go beyond the response body limit.
 // It won't copy the bytes if the body access isn't accessible.
-func (tx *Transaction) WriteResponseBody(b []byte) (*types.Interruption, int, error) {
+// 为了支持SSE流式回答，新增http.ResponseWriter入参
+func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*types.Interruption, int, error) {
 	if tx.RuleEngine == types.RuleEngineOff {
 		return nil, 0, nil
 	}
@@ -1141,10 +1143,16 @@ func (tx *Transaction) WriteResponseBody(b []byte) (*types.Interruption, int, er
 		return nil, 0, nil
 	}
 
+	// 将变量提前，做公共使用
+	var (
+		writingBytes           = int64(len(b))
+		runProcessResponseBody = false
+	)
+
 	// TODO 新增SSE响应体中，LLM回答内容的缓存；
 	// 如果缓存空间达到上限，或者要缓存的内容大小超过缓存空间剩余的大小，清理要存入内容2倍大小的空间，如果2倍大小超过缓存上限
 	// 清理1倍大小的空间
-	if tx.variables.responseContentType.Get() == "appliacation/x-ndjson" {
+	if tx.variables.responseContentType.Get() == "application/x-ndjson" {
 		buf := new(strings.Builder)
 		_, err := buf.Write(b)
 		if err != nil {
@@ -1166,9 +1174,9 @@ func (tx *Transaction) WriteResponseBody(b []byte) (*types.Interruption, int, er
 					// 清空1倍的空间
 					tmpBytes = tmpBytes[len(ansByte):]
 				}
-				tx.responseBodyBuffer.Write(tmpBytes)
+				tx.responseBodyLLMContent.Write(tmpBytes)
 			}
-			tx.responseBodyBuffer.Write(ansByte)
+			tx.responseBodyLLMContent.Write(ansByte)
 		}
 
 		//组合答案并做LLMGuard回答内容检查
@@ -1184,6 +1192,25 @@ func (tx *Transaction) WriteResponseBody(b []byte) (*types.Interruption, int, er
 			}
 			return tx.interruption, 0, nil
 		}
+
+		// 新增responseBodyBuffer的SSE处理
+		// 每次接收到一个服务器json应答立即进行检测并返回给客户端
+		w, err := tx.responseBodyBuffer.Write(b[:writingBytes])
+		if err != nil {
+			return nil, 0, err
+		}
+		tx.interruption, err = tx.ProcessResponseBody()
+		if err != nil {
+			return nil, w, err
+		}
+		//TODO 如何发送？这里无法获取ResponseWriter
+		reader, err := tx.responseBodyBuffer.Reader()
+		if err != nil {
+			return nil, w, err
+		}
+		_, _ = io.Copy(rw, reader)
+		tx.responseBodyBuffer.Reset()
+		return tx.interruption, w, nil
 	}
 
 	if tx.ResponseBodyLimit == tx.responseBodyBuffer.length {
@@ -1198,10 +1225,6 @@ func (tx *Transaction) WriteResponseBody(b []byte) (*types.Interruption, int, er
 		}
 	}
 
-	var (
-		writingBytes           = int64(len(b))
-		runProcessResponseBody = false
-	)
 	if tx.responseBodyBuffer.length+writingBytes >= tx.ResponseBodyLimit {
 		tx.variables.outboundDataError.Set("1")
 		if tx.WAF.ResponseBodyLimitAction == types.BodyLimitActionReject {
