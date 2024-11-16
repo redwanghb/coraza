@@ -1224,7 +1224,7 @@ func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*typ
 
 			// 构造匹配信息，写入到tx.variables.matchVar中，作为后续使用的payload
 			matchData := &corazarules.MatchData{
-				Variable_:   variables.RequestBody,
+				Variable_:   variables.ResponseBody,
 				Key_:        "LLM Answer",
 				Value_:      ansPartial.String(),
 				ChainLevel_: 0,
