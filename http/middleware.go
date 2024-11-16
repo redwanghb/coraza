@@ -46,6 +46,10 @@ func processRequest(tx types.Transaction, req *http.Request) (*types.Interruptio
 		}
 	}
 
+	// 将请求头信息添加到tx.requestHeader中
+	// 由于req.Header中不包含Host信息，先写入Host信息
+	tx.WriteRequestHeader(req)
+
 	// Host will always be removed from req.Headers() and promoted to the
 	// Request.Host field, so we manually add it
 	if req.Host != "" {

@@ -88,6 +88,10 @@ const (
 	// BodyLimitActionReject will reject the connection in case
 	// the body size exceeds the configured limit
 	BodyLimitActionReject BodyLimitAction = 1
+
+	// 添加新的处理方案，流式处理，当达到缓存上限的时候，删除老的内容给新的内容
+	// 腾出空间存储
+	BodyLimitActionChunk BodyLimitAction = 2
 )
 
 type AuditLogPart byte

@@ -82,8 +82,8 @@ func (l *LLMGuardResponse) Valid() bool {
 }
 
 type LLMGuardPromptRequest struct {
-	Prompt            string
-	Scanners_Suppress []Scanner
+	Prompt            string    `json:"prompt"`
+	Scanners_Suppress []Scanner `json:"scanners_suppress"`
 }
 
 func (lpr *LLMGuardPromptRequest) AddScannerSuppress(scanner Scanner) {
@@ -108,9 +108,9 @@ func (lpr *LLMGuardPromptRequest) RemoveFromScannerList(scanner Scanner) {
 //TODO NewLLMGuardPromptRequest function
 
 type LLMGuardOutputRequest struct {
-	Prompt            string
-	Output            string
-	Scanners_Suppress []Scanner
+	Prompt            string    `json:"prompt"`
+	Output            string    `json:"output"`
+	Scanners_Suppress []Scanner `json:"scanners_suppress"`
 }
 
 func (lor *LLMGuardOutputRequest) AddScannerSuppress(scanner Scanner) {

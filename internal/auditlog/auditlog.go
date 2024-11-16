@@ -87,6 +87,22 @@ type Transaction struct {
 	Producer_        *TransactionProducer `json:"producer,omitempty"`
 	HighestSeverity_ string               `json:"highest_severity"`
 	IsInterrupted_   bool                 `json:"is_interrupted"`
+	// 新增用于存储最后匹配到规则的规则ID，需要在LLMGuard检测的时候，写入tx.variables.rule.SetIndex("id", 0, "规则ID")
+	LastRID_ string `json:"last_id,omitempty"`
+	// 新增用于存储最后匹配到规则的规则描述，需要在LLMGuard检测的时候，写入tx.variables.rule.SetIndex("msg", 0, "规则描述")
+	LastMessage_ string `json:"last_message,omitempty"`
+	// 新增用于存储最后匹配到规则的数据特征，对应payload，如果是LLMGuard的时候，需要输出对应的请求和应答，如果是特征规则输出payload
+	Payload_ string `json:"payload,omitempty"`
+	// 新增用于存储请求头内容的RequestHeader_
+	RequestHeader_ string `json:"request_header,omitempty"`
+	// 新增用于存储响应头内容的ResponseHeader_
+	ResponseHeader_ string `json:"response_header,omitempty"`
+	// 存储大模型问题部分内容
+	LLMQuestion_ string `json:"llm_question,omitempty"`
+	// 存储大模型答案部分内容
+	LLMAnswer_ string `json:"llm_answer,omitempty"`
+	// 存储interruption里的action；
+	Action_ string `json:"action,omitempty"`
 }
 
 var _ plugintypes.AuditLogTransaction = Transaction{}
@@ -149,6 +165,46 @@ func (t Transaction) HighestSeverity() string {
 
 func (t Transaction) IsInterrupted() bool {
 	return t.IsInterrupted_
+}
+
+// 添加LastRID() string方法，用于获取最后匹配到的规则ID
+func (t Transaction) LastRID() string {
+	return t.LastRID_
+}
+
+// 添加LastMessage() string方法，用于获取最后匹配到的规则描述
+func (t Transaction) LastMessage() string {
+	return t.LastMessage_
+}
+
+// 添加Payload() string方法，用于获取最后匹配到规则的数据内容，仅针对特征规则检测部分内容
+func (t Transaction) Payload() string {
+	return t.Payload_
+}
+
+// 添加RequestHeader() string方法，用于获取请求头字符串内容
+func (t Transaction) RequestHeader() string {
+	return t.RequestHeader_
+}
+
+// 添加ResponseHeader() string方法，用于获取响应头字符串内容
+func (t Transaction) ResponseHeader() string {
+	return t.ResponseHeader_
+}
+
+// 添加LLMQuestion() string方法，用于获取问题
+func (t Transaction) LLMQuestion() string {
+	return t.LLMQuestion_
+}
+
+// 添加LLMAnswer() string方法，用于获取答案
+func (t Transaction) LLMAnswer() string {
+	return t.LLMAnswer_
+}
+
+// 添加Action() string方法，用于获取处理动作
+func (t Transaction) Action() string {
+	return t.Action_
 }
 
 // TransactionResponse contains response specific

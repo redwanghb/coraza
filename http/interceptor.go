@@ -42,6 +42,10 @@ func (i *rwInterceptor) WriteHeader(statusCode int) {
 	}
 
 	i.statusCode = statusCode
+
+	// 将响应头写入到tx.responseHeader中，用于后续发送告警日志的时候，包含request header信息
+	i.tx.WriteResponseHeader(i.w)
+
 	if it := i.tx.ProcessResponseHeaders(statusCode, i.proto); it != nil {
 		i.cleanHeaders()
 		i.Header().Set("Content-Length", "0")

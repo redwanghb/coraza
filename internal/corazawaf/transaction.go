@@ -128,6 +128,24 @@ type Transaction struct {
 	variables TransactionVariables
 
 	transformationCache map[transformationKey]*transformationValue
+
+	// 新增请求头信息，用于保存字符串形式的请求头
+	// TODO 请求头中不包含请求行信息，当前从net/http库无法一次性获取完整的请求头信息，后续完善
+	requestHeader string
+
+	// 新增响应头信息，用于保存字符串形式的响应头
+	// TODO 响应头中不状态码信息，当前从net/http库无法一次性获取完整的信息，后续完善
+	responseHeader string
+}
+
+// 新增将http.Request的请求头和Host写入requestHeader的方法
+func (tx *Transaction) WriteRequestHeader(req *http.Request) {
+	s := strings.Builder{}
+	s.WriteString("Host: ")
+	s.WriteString(req.Host)
+	s.WriteString("\n")
+	req.Header.Write(&s)
+	tx.requestHeader = s.String()
 }
 
 func (tx *Transaction) ID() string {
@@ -1038,6 +1056,16 @@ func (tx *Transaction) ProcessRequestBody() (*types.Interruption, error) {
 				Action: "deny",
 				Status: 403,
 			}
+			// 将tx.audit设置为true，方便后续发送告警日志
+			tx.audit = true
+			// TODO 需要构造[]types.MatchData，并写将内容写入到tx的MatchRules结构体中，参考tx.MatchRule(r, matchedValues)
+			matchData := corazarules.MatchData{
+				Variable_:   variables.RequestBody,
+				Key_:        "LLM Question",
+				Value_:      s.String(),
+				ChainLevel_: 0,
+			}
+			tx.matchVariable(&matchData)
 			return tx.interruption, nil
 		}
 
@@ -1149,10 +1177,10 @@ func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*typ
 		runProcessResponseBody = false
 	)
 
-	// TODO 新增SSE响应体中，LLM回答内容的缓存；
+	// 新增SSE响应体中，LLM回答内容的缓存；
 	// 如果缓存空间达到上限，或者要缓存的内容大小超过缓存空间剩余的大小，清理要存入内容2倍大小的空间，如果2倍大小超过缓存上限
 	// 清理1倍大小的空间
-	if tx.variables.responseContentType.Get() == "application/x-ndjson" {
+	if IsSSEContent(tx.variables.responseContentType.Get()) {
 		buf := new(strings.Builder)
 		_, err := buf.Write(b)
 		if err != nil {
@@ -1182,19 +1210,34 @@ func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*typ
 		//组合答案并做LLMGuard回答内容检查
 		ansPartial := new(strings.Builder)
 		ansPartial.Write(tx.responseBodyLLMContent.buffer.Bytes())
-		fmt.Printf("debug transaction responseBodyLLMContent is %s\n", ansPartial.String())
-		detection, _ := llmguard.DetectAnswer("", ansPartial.String())
+		request := new(strings.Builder)
+		request.Write(tx.requestBodyBuffer.buffer.Bytes())
+		detection, _ := llmguard.DetectAnswer(request.String(), ansPartial.String())
 		if detection {
 			tx.interruption = &types.Interruption{
 				RuleID: 90002,
 				Action: "deny",
 				Status: 403,
 			}
+			// 将tx.audit设置为true，方便发送告警日志
+			tx.audit = true
+
+			// 构造匹配信息，写入到tx.variables.matchVar中，作为后续使用的payload
+			matchData := &corazarules.MatchData{
+				Variable_:   variables.RequestBody,
+				Key_:        "LLM Answer",
+				Value_:      ansPartial.String(),
+				ChainLevel_: 0,
+			}
+			tx.matchVariable(matchData)
 			return tx.interruption, 0, nil
 		}
 
 		// 新增responseBodyBuffer的SSE处理
 		// 每次接收到一个服务器json应答立即进行检测并返回给客户端
+		if writingBytes > tx.ResponseBodyLimit {
+			tx.debugLogger.Error().Int("ResponseBodyLimit is too small, you need to set to %i", int(writingBytes))
+		}
 		w, err := tx.responseBodyBuffer.Write(b[:writingBytes])
 		if err != nil {
 			return nil, 0, err
@@ -1203,7 +1246,8 @@ func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*typ
 		if err != nil {
 			return nil, w, err
 		}
-		//TODO 如何发送？这里无法获取ResponseWriter
+
+		// 流式发送服务器应答内容
 		reader, err := tx.responseBodyBuffer.Reader()
 		if err != nil {
 			return nil, w, err
@@ -1477,6 +1521,27 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 	clientPort, _ := strconv.Atoi(tx.variables.remotePort.Get())
 	hostPort, _ := strconv.Atoi(tx.variables.serverPort.Get())
 
+	//处理tx.variables.rule中id和msg可能为空的情况；例如加载的规则中未包含id和msg信息，不确定加载规则的过程中是否判断规则中必须包含id和msg action
+	var rid string
+	if rids := tx.variables.rule.Get("id"); rids != nil {
+		rid = rids[0]
+	}
+	var msg string
+	if msgs := tx.variables.rule.Get("msg"); msgs != nil {
+		msg = msgs[0]
+	}
+
+	//当命中了LLMGuard检查的情况下，如果命中了LLMGuard检测，提取Question和Answer
+	//TODO 如果是答案命中了LLM检测，问题提取不到；
+	//TODO 如果是检测规则命中了LLM内容检查，这种方式无法获取Question和Answer，这部分内容会存储在payload中；
+	var question, answer string
+	if tx.variables.matchedVarName.Get() == "REQUEST_BODY:LLM Question" {
+		question = tx.variables.matchedVar.Get()
+	}
+	if tx.variables.matchedVarName.Get() == "RESPONSE_BODY:LLM Answer" {
+		answer = tx.variables.matchedVar.Get()
+	}
+
 	// Convert the transaction fullRequestLength to Int32
 	requestLength, err := strconv.ParseInt(tx.variables.fullRequestLength.Get(), 10, 32)
 	if err != nil {
@@ -1507,6 +1572,19 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 			Length_:   int32(requestLength),
 		},
 		IsInterrupted_: tx.IsInterrupted(),
+		// 从tx.variables.rule中提取id作为命中规则的规则ID；
+		LastRID_: rid,
+		// 从tx.variables.rule中提取msg作为命中规则的规则描述
+		LastMessage_: msg,
+		// 从tx.variables.matchedVar获取payload
+		Payload_: tx.variables.matchedVar.String(),
+		// 从tx.requestHeader获取请求头部分内容
+		RequestHeader_: tx.requestHeader,
+		// 从tx.responseHeader获取响应头部分内容
+		ResponseHeader_: tx.responseHeader,
+		LLMQuestion_:    question,
+		LLMAnswer_:      answer,
+		Action_:         tx.interruption.Action,
 	}
 
 	for _, part := range tx.AuditLogParts {
@@ -1686,6 +1764,13 @@ func (tx *Transaction) generateResponseBodyError(err error) {
 	tx.variables.resBodyErrorMsg.Set(fmt.Sprintf("%s: %s", tx.variables.resBodyProcessor.Get(), err.Error()))
 	tx.variables.resBodyProcessorError.Set("1")
 	tx.variables.resBodyProcessorErrorMsg.Set(err.Error())
+}
+
+// 将http.ResponseWriter中的头部信息写入到transaction的responseHeader中(字符串形式)
+func (tx *Transaction) WriteResponseHeader(rw http.ResponseWriter) {
+	s := strings.Builder{}
+	rw.Header().Write(&s)
+	tx.responseHeader = s.String()
 }
 
 // TransactionVariables has pointers to all the variables of the transaction

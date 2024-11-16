@@ -18,6 +18,10 @@ func init() {
 	RegisterWriter("https", func() plugintypes.AuditLogWriter {
 		return &httpsWriter{}
 	})
+	// 新增初始化的时候注册了数据库的writer
+	RegisterWriter("database", func() plugintypes.AuditLogWriter {
+		return &dbWriter{}
+	})
 
 	RegisterFormatter("json", &jsonFormatter{})
 	RegisterFormatter("jsonlegacy", &legacyJSONFormatter{})

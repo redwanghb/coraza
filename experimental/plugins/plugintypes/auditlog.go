@@ -5,6 +5,7 @@ package plugintypes
 
 import (
 	"io/fs"
+	"strconv"
 
 	"github.com/redwanghb/coraza/v3/internal/collections"
 	"github.com/redwanghb/coraza/v3/types"
@@ -34,6 +35,22 @@ type AuditLogTransaction interface {
 	Producer() AuditLogTransactionProducer
 	HighestSeverity() string // The highest severity of the matched rules for the transaction
 	IsInterrupted() bool     // True if the transaction was interrupted
+	// 新增LastRID() string 方法，用于获取最后匹配的规则ID
+	LastRID() string
+	// 新增LastMessage() string 方法，用于获取最后匹配的规则的描述信息
+	LastMessage() string
+	// 新增Payload() string方法，用于获取最后匹配规则的数据特征，对应输出告警的Payload
+	Payload() string
+	// 新增RequestHeader() string方法，用于获取请求头字符串
+	RequestHeader() string
+	// 新增ResponseHeader() string方法，用于获取响应头字符串
+	ResponseHeader() string
+	// 新增LLMQuestion() string方法，用于获取问题
+	LLMQuestion() string
+	// 新增LLMAnswer() string方法，用于获取答案
+	LLMAnswer() string
+	// 新增Action() string方法，用于获取动作
+	Action() string
 }
 
 // AuditLogTransactionResponse contains response specific information
@@ -116,6 +133,117 @@ type AuditLogConfig struct {
 
 	// Formatter is the formatter to use when writing formatted audit logs.
 	Formatter AuditLogFormatter
+
+	// DB是与数据库有关的信息
+	DB *DB
+}
+
+// 新增了修改AuditLogConfig.Target的方法
+func (a *AuditLogConfig) WriteTarget(s string) *AuditLogConfig {
+	a.Target = s
+	return a
+}
+
+// 新增了修改AuditLogConfig.Formatter的方法
+func (a *AuditLogConfig) WriteFormatter(f AuditLogFormatter) *AuditLogConfig {
+	a.Formatter = f
+	return a
+}
+
+// 新增返回DB结构体的方法
+func (a *AuditLogConfig) GetDBType() string {
+	return a.DB.dbType
+}
+
+// 新增DB结构体，用于存储数据库信息，将auditlog写入数据库
+type DB struct {
+	name     string
+	user     string
+	password string
+	address  string
+	port     int
+	tls      bool
+	dbType   string
+}
+
+func (d *DB) Name() string {
+	return d.name
+}
+
+func (d *DB) User() string {
+	return d.user
+}
+
+func (d *DB) Password() string {
+	return d.password
+}
+
+func (d *DB) Address() string {
+	return d.address
+}
+
+func (d *DB) Port() string {
+	return strconv.Itoa(d.port)
+}
+
+func (d *DB) EnableTLS() bool {
+	return d.tls
+}
+
+func (d *DB) DBType() string {
+	return d.dbType
+}
+
+func NewDB(opts ...DBOption) *DB {
+	db := new(DB)
+	for _, opt := range opts {
+		opt(db)
+	}
+	return db
+}
+
+type DBOption func(*DB)
+
+func WithName(name string) DBOption {
+	return func(d *DB) {
+		d.name = name
+	}
+}
+
+func WithUser(user string) DBOption {
+	return func(d *DB) {
+		d.user = user
+	}
+}
+
+func WithPassword(password string) DBOption {
+	return func(d *DB) {
+		d.password = password
+	}
+}
+
+func WithAddress(address string) DBOption {
+	return func(d *DB) {
+		d.address = address
+	}
+}
+
+func WithPort(port int) DBOption {
+	return func(d *DB) {
+		d.port = port
+	}
+}
+
+func WithTLS(tls bool) DBOption {
+	return func(d *DB) {
+		d.tls = tls
+	}
+}
+
+func WithDBType(dbtype string) DBOption {
+	return func(d *DB) {
+		d.dbType = dbtype
+	}
 }
 
 // AuditLogWriter is the interface for all log writers.

@@ -196,6 +196,12 @@ type Transaction interface {
 	// ID returns the transaction ID.
 	ID() string
 
+	// 新增WriteRequestHeader方法，用于将请求头以字符串的形式保留在trasaction.requestHeader中
+	WriteRequestHeader(req *http.Request)
+
+	// 新增WriteResponseHeader方法，用于将请求头以字符串的形式保留在transaction.responseHeader中
+	WriteResponseHeader(res http.ResponseWriter)
+
 	// Closer closes the transaction and releases any resources associated with it such as request/response bodies.
 	io.Closer
 }

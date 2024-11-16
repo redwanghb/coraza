@@ -234,7 +234,8 @@ func (r *Rule) doEvaluate(logger debuglog.Logger, phase types.RulePhase, tx *Tra
 					v.Exceptions = append(v.Exceptions, ruleVariableException{c.KeyStr, nil})
 				}
 			}
-
+			//values等于[]types.MatchData，基于rule.ruleVariableParams在tx中查找匹配variable指定的数据用于后续的检测，
+			//MatchData主要是先提取符合条件的数据，留存后用于检测是否匹配规则中的Operator部分
 			values = tx.GetField(v)
 
 			vLog := logger
@@ -243,7 +244,10 @@ func (r *Rule) doEvaluate(logger debuglog.Logger, phase types.RulePhase, tx *Tra
 			}
 			vLog.Debug().Msg("Expanding arguments for rule")
 
+			// 这里的arg是MatchData，也就是提取到的匹配的数据
 			for i, arg := range values {
+				// 如果规则设置了action t，那么就按照t的设置对提取到的数据进行转换
+				// 如果未设置t，那么就直接返回提取到内容的字符串列表
 				args, errs := r.transformArg(arg, i, cache)
 				if len(errs) > 0 {
 					vWarnLog := vLog.Warn()
@@ -256,13 +260,14 @@ func (r *Rule) doEvaluate(logger debuglog.Logger, phase types.RulePhase, tx *Tra
 				}
 
 				// args represents the transformed variables
+				// carg代表经过transform后的字符串列表中的一段待检测的数据
 				for _, carg := range args {
 					evalLog := vLog.
 						Debug().
 						Str("operator_function", r.operator.Function).
 						Str("operator_data", r.operator.Data).
 						Str("arg", carg)
-
+					// 基于operator匹配提取的数据是否命中规则
 					match := r.executeOperator(carg, tx)
 					if match {
 						mr := &corazarules.MatchData{
@@ -272,6 +277,7 @@ func (r *Rule) doEvaluate(logger debuglog.Logger, phase types.RulePhase, tx *Tra
 							ChainLevel_: chainLevel,
 						}
 						// Set the txn variables for expansions before usage
+						// 将命中规则MatchData结构体，存储到tx.variables.MatchVars, tx.variables.MatchVarName和tx.varibales.MatchVar
 						r.matchVariable(tx, mr)
 
 						// Expansion for parent rule of a chain is postponed in order to rely on updated MATCHED_* variables.
@@ -281,9 +287,11 @@ func (r *Rule) doEvaluate(logger debuglog.Logger, phase types.RulePhase, tx *Tra
 						// log the matched data.
 						if r.ParentID_ != noID || !r.HasChain {
 							if r.Msg != nil {
+								// 将规则中的Msg存储到MatchData的Message_中
 								mr.Message_ = r.Msg.Expand(tx)
 							}
 							if r.LogData != nil {
+								// 将规则中的LogData存储到MatchData的Data_中
 								mr.Data_ = r.LogData.Expand(tx)
 							}
 						}
@@ -376,6 +384,7 @@ func (r *Rule) doEvaluate(logger debuglog.Logger, phase types.RulePhase, tx *Tra
 		}
 		if r.ID_ != noID {
 			// we avoid matching chains and secmarkers
+			// 将matchedValues的内容写入到tx.MatchRules中
 			tx.MatchRule(r, matchedValues)
 		}
 	}
@@ -440,6 +449,9 @@ func (r *Rule) matchVariable(tx *Transaction, m *corazarules.MatchData) {
 	// if multiphaseEvaluation is true, the non disruptive actions execution is deferred
 	// SecActions (r.operator == nil) are always executed
 	if !multiphaseEvaluation || r.operator == nil {
+		// 将命中规则的variableName和对应的内容，存储到tx.variables.matchedVarName(存储命中的variableName)，
+		// tx.variables.matchedVars(存储variableName:{variableName, variableValue})，和tx.variables.MatchedVar(variableValue)
+		// 后续发送告警的payload可以考虑使用tx.variables.Matchedvars或者tx.variables.MatchedVar
 		tx.matchVariable(m)
 		for _, a := range r.actions {
 			if a.Function.Type() == plugintypes.ActionTypeNondisruptive {
