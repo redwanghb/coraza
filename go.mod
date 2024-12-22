@@ -20,6 +20,7 @@ require (
 	github.com/anuraaga/go-modsecurity v0.0.0-20220824035035-b9a4099778df
 	github.com/corazawaf/libinjection-go v0.2.1
 	github.com/foxcpp/go-mockdns v1.1.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/magefile/mage v1.15.0
 	github.com/mccutchen/go-httpbin/v2 v2.14.0

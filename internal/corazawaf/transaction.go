@@ -1521,10 +1521,10 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 	clientPort, _ := strconv.Atoi(tx.variables.remotePort.Get())
 	hostPort, _ := strconv.Atoi(tx.variables.serverPort.Get())
 
-	//处理tx.variables.rule中id和msg可能为空的情况；例如加载的规则中未包含id和msg信息，不确定加载规则的过程中是否判断规则中必须包含id和msg action
+	//处理rid，从tx.interruption中提取rid，如果action是block的话，应该不会有tx.interruption；需要修改block的情况
 	var rid string
-	if rids := tx.variables.rule.Get("id"); rids != nil {
-		rid = rids[0]
+	if tx.interruption != nil && tx.interruption.RuleID != 0 {
+		rid = strconv.Itoa(tx.interruption.RuleID)
 	}
 	var msg string
 	if msgs := tx.variables.rule.Get("msg"); msgs != nil {
@@ -1577,7 +1577,7 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 		// 从tx.variables.rule中提取msg作为命中规则的规则描述
 		LastMessage_: msg,
 		// 从tx.variables.matchedVar获取payload
-		Payload_: tx.variables.matchedVar.String(),
+		Payload_: tx.variables.matchedVar.Get(),
 		// 从tx.requestHeader获取请求头部分内容
 		RequestHeader_: tx.requestHeader,
 		// 从tx.responseHeader获取响应头部分内容

@@ -158,12 +158,12 @@ func (a *AuditLogConfig) GetDBType() string {
 // 新增DB结构体，用于存储数据库信息，将auditlog写入数据库
 type DB struct {
 	name     string
-	user     string
-	password string
-	address  string
-	port     int
-	tls      bool
-	dbType   string
+	user     string //数据库用户名
+	password string //数据库密码
+	address  string //数据库地址
+	port     int    //数据库服务端口号
+	tls      bool   //是否开启tls
+	dbType   string //数据库类型
 }
 
 func (d *DB) Name() string {

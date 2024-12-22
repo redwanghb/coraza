@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"strconv"
 	"strings"
 
@@ -163,6 +164,20 @@ func WrapHandler(waf coraza.WAF, h http.Handler) http.Handler {
 			w.WriteHeader(obtainStatusCodeFromInterruptionOrDefault(it, http.StatusOK))
 			return
 		}
+
+		// 添加httptrace用于跟踪反向代理后连接的服务器的IP地址和端口号
+		tracer := &httptrace.ClientTrace{
+			GotConn: func(info httptrace.GotConnInfo) {
+				fmt.Printf("server address is %+v\n", info.Conn.RemoteAddr())
+				serverIP, serverPort, ok := strings.Cut(info.Conn.RemoteAddr().String(), ":")
+				if ok {
+					fmt.Printf("serverIP is %s\n", serverIP)
+					fmt.Printf("serverPort is %s\n", serverPort)
+				}
+			},
+		}
+		tracerCtx := httptrace.WithClientTrace(r.Context(), tracer)
+		r = r.WithContext(tracerCtx)
 
 		ww, processResponse := wrap(w, r, tx)
 

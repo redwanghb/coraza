@@ -103,7 +103,7 @@ func (pg *pgWriter) Write(al plugintypes.AuditLog) error {
 		host = al.Transaction().ServerID()
 		version = al.Transaction().Request().Protocol()
 		req_body = al.Transaction().Request().Body()
-		res_header = al.Transaction().RequestHeader()
+		req_header = al.Transaction().RequestHeader()
 	}
 
 	if al.Transaction().HasResponse() {
@@ -114,7 +114,7 @@ func (pg *pgWriter) Write(al plugintypes.AuditLog) error {
 	_, err := pg.Pool.Exec(
 		context.Background(),
 		pg.sql,
-		al.Transaction().UnixTimestamp(),
+		al.Transaction().UnixTimestamp()/1000000,
 		uuid.New().String(),
 		al.Transaction().HighestSeverity(),
 		// TODO Category，暂时为空，等后续处理，当前规则结构中不支持Category定义，考虑使用Category与规则ID匹配的方式处理
