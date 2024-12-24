@@ -202,6 +202,8 @@ type Transaction interface {
 	// 新增WriteResponseHeader方法，用于将请求头以字符串的形式保留在transaction.responseHeader中
 	WriteResponseHeader(res http.ResponseWriter)
 
+	// 新增设置tx.variables.remoteAddr和tx.variables.remotePort的方法
+	SetServerAddress(addr string, port string)
 	// Closer closes the transaction and releases any resources associated with it such as request/response bodies.
 	io.Closer
 }

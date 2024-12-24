@@ -700,6 +700,12 @@ func (tx *Transaction) ProcessConnection(client string, cPort int, server string
 	tx.variables.serverPort.Set(p2)
 }
 
+// 设置tx.variables.serverAddr和tx.variables.serverPort
+func (tx *Transaction) SetServerAddress(addr string, port string) {
+	tx.variables.serverAddr.Set(addr)
+	tx.variables.serverPort.Set(port)
+}
+
 // ExtractGetArguments transforms an url encoded string to a map and creates ARGS_GET
 func (tx *Transaction) ExtractGetArguments(uri string) {
 	data := urlutil.ParseQuery(uri, '&')
@@ -1530,6 +1536,12 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 	if msgs := tx.variables.rule.Get("msg"); msgs != nil {
 		msg = msgs[0]
 	}
+	var action string
+	if tx.Interruption() != nil {
+		action = tx.Interruption().Action
+	} else {
+		action = ""
+	}
 
 	//当命中了LLMGuard检查的情况下，如果命中了LLMGuard检测，提取Question和Answer
 	//TODO 如果是答案命中了LLM检测，问题提取不到；
@@ -1584,7 +1596,7 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 		ResponseHeader_: tx.responseHeader,
 		LLMQuestion_:    question,
 		LLMAnswer_:      answer,
-		Action_:         tx.interruption.Action,
+		Action_:         action,
 	}
 
 	for _, part := range tx.AuditLogParts {
