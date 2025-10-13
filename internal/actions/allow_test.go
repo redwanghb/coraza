@@ -6,7 +6,7 @@ package actions
 import (
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/internal/corazatypes"
+	"waap/internal/corazatypes"
 )
 
 func TestAllowInit(t *testing.T) {

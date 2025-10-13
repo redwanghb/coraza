@@ -4,8 +4,8 @@
 package plugins
 
 import (
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/operators"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/operators"
 )
 
 // RegisterOperator registers a new operator

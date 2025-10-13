@@ -7,7 +7,7 @@
 package operators
 
 import (
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func newRBL(plugintypes.OperatorOptions) (plugintypes.Operator, error) {

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func TestSerialLoggerSuccessOnInit(t *testing.T) {

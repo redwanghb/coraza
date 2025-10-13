@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/internal/corazawaf"
+	"waap/types"
 )
 
 func TestRuleMatch(t *testing.T) {

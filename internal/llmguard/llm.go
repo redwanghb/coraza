@@ -9,7 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
+	"waap/debuglog"
+
 	"github.com/tidwall/gjson"
 )
 
@@ -102,8 +103,12 @@ type LLMPath struct {
 }
 
 // 记录全部LLM框架接口的问题和答案的json路径
-var RequestPaths []string
-var ResponsePaths []string
+var RequestPaths []string = []string{
+	"messages.0.content",
+}
+var ResponsePaths []string = []string{
+	"message.content",
+}
 
 // 将配置文件中的Request和Response添加到json路径列表中
 func jsonPath(config *Config) {
@@ -130,13 +135,26 @@ func ContentExtractFromJSONDATA(data string, datatype DATATYPE) (string, bool) {
 	}
 }
 
+// 部分大模型前端API会将历史信息一起提交给服务器进行检测
 func RequestBodyExtract(data string) (string, bool) {
-	for _, jsonPath := range RequestPaths {
-		result := gjson.Get(data, jsonPath)
-		if result.Exists() {
-			return result.String(), true
-		}
+	res := gjson.Get(data, "messages")
+	if !res.Exists() {
+		return "", false
 	}
+	if res.IsArray() {
+		messages := res.Array()
+		content := messages[len(messages)-1].Get("content")
+		if content.Exists() {
+			return content.String(), true
+		}
+		return "", false
+	}
+	// for _, jsonPath := range RequestPaths {
+	// 	result := gjson.Get(data, jsonPath)
+	// 	if result.Exists() {
+	// 		return result.String(), true
+	// 	}
+	// }
 	return "", false
 }
 

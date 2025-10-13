@@ -13,13 +13,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/internal/auditlog"
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/internal/environment"
-	"github.com/redwanghb/coraza/v3/internal/memoize"
-	utils "github.com/redwanghb/coraza/v3/internal/strings"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/debuglog"
+	"waap/internal/auditlog"
+	"waap/internal/corazawaf"
+	"waap/internal/environment"
+	"waap/internal/memoize"
+	utils "waap/internal/strings"
+	"waap/types"
 )
 
 // DirectiveOptions contains the parsed options for a directive. It is mutable and propagated

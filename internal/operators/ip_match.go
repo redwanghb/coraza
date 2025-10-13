@@ -9,7 +9,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type ipMatch struct {

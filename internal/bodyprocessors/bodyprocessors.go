@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type bodyProcessorWrapper = func() plugintypes.BodyProcessor

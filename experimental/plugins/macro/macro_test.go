@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/types/variables"
 )
 
 func TestNewMacro(t *testing.T) {

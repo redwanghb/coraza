@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
+	"waap/debuglog"
 )
 
 // Transaction is created from a WAF instance to handle web requests and responses,
@@ -204,6 +204,8 @@ type Transaction interface {
 
 	// 新增设置tx.variables.remoteAddr和tx.variables.remotePort的方法
 	SetServerAddress(addr string, port string)
+
+	// 新增获取tx.interruption的函数
 	// Closer closes the transaction and releases any resources associated with it such as request/response bodies.
 	io.Closer
 }

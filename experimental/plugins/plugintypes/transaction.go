@@ -4,10 +4,10 @@
 package plugintypes
 
 import (
-	"github.com/redwanghb/coraza/v3/collection"
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/collection"
+	"waap/debuglog"
+	"waap/types"
+	"waap/types/variables"
 )
 
 // TransactionState tracks the state of a transaction for use in actions and operators.

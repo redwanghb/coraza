@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 // TODO 使用其他方式定位数据库Writer，避免出现单词拼写错误的情况
@@ -13,8 +13,8 @@ const (
 )
 
 const (
-	TABLENAME = "eventlog"
-	DBNAME    = "insights"
+	DEFAULTTABLENAME = "eventlog"
+	DEFAULTDBNAME    = "insights"
 )
 
 // 定义要支持的表结构列表
@@ -55,7 +55,7 @@ type EventLog struct {
 	// Event ID
 	EventID string `json:"event_id"`
 	// 威胁等级
-	Severity string `json:"serverity"`
+	Severity string `json:"severity"`
 	// 威胁类别
 	Category string `json:"category"`
 	// 威胁指标

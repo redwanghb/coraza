@@ -6,7 +6,7 @@ package operators
 import (
 	"fmt"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 var operators = map[string]plugintypes.OperatorFactory{}

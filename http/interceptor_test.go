@@ -16,7 +16,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3"
+	"waap"
 )
 
 func TestWriteHeader(t *testing.T) {

@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/collection"
-	"github.com/redwanghb/coraza/v3/internal/corazarules"
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/collection"
+	"waap/internal/corazarules"
+	"waap/types"
+	"waap/types/variables"
 )
 
 type Single struct {

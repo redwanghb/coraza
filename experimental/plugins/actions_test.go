@@ -6,9 +6,9 @@ package plugins_test
 import (
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/actions"
+	"waap/experimental/plugins"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/actions"
 )
 
 func TestAction(t *testing.T) {

@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/experimental/plugins/plugintypes"
+	"waap/types"
 )
 
 var sampleHttpsAuditLog = &Log{

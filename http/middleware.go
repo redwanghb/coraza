@@ -15,9 +15,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3"
-	"github.com/redwanghb/coraza/v3/experimental"
-	"github.com/redwanghb/coraza/v3/types"
+	coraza "waap"
+	"waap/experimental"
+	"waap/types"
 )
 
 // processRequest fills all transaction variables from an http.Request object
@@ -162,6 +162,15 @@ func WrapHandler(waf coraza.WAF, h http.Handler) http.Handler {
 			return
 		} else if it != nil {
 			w.WriteHeader(obtainStatusCodeFromInterruptionOrDefault(it, http.StatusOK))
+			switch {
+			case it.RuleID == 90001 && it.Action == "warn":
+				_, _ = io.Copy(w, strings.NewReader(it.Data))
+				flusher, ok := w.(http.Flusher)
+				if !ok {
+					return
+				}
+				flusher.Flush()
+			}
 			return
 		}
 

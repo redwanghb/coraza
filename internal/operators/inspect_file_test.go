@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func TestInspectFile(t *testing.T) {

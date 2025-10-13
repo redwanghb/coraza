@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	txhttp "github.com/redwanghb/coraza/v3/http"
+	txhttp "waap/http"
 )
 
 func setupTestServer(t *testing.T) *httptest.Server {

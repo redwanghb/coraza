@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/internal/strings"
+	"waap/internal/strings"
 )
 
 func TestXMLAttribures(t *testing.T) {

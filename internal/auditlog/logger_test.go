@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func TestDefaultWriters(t *testing.T) {

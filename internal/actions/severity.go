@@ -4,9 +4,9 @@
 package actions
 
 import (
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/corazawaf"
+	"waap/types"
 )
 
 // Action Group: Metadata

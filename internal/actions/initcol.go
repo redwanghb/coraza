@@ -6,7 +6,7 @@ package actions
 import (
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 // Action Group: Non-disruptive

@@ -3,7 +3,7 @@
 
 package types
 
-import "github.com/redwanghb/coraza/v3/types/variables"
+import "waap/types/variables"
 
 // MatchData works like VariableKey but is used for logging,
 // so it contains the collection as a string, and it's value

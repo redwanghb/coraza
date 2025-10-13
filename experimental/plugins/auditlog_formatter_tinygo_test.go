@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/redwanghb/coraza/v3"
-	"github.com/redwanghb/coraza/v3/experimental/plugins"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap"
+	"waap/experimental/plugins"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type testFormatter struct{}

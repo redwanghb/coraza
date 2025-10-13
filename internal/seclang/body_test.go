@@ -6,7 +6,7 @@ package seclang
 import (
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
+	"waap/internal/corazawaf"
 )
 
 /*

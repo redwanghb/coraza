@@ -4,10 +4,10 @@
 package actions
 
 import (
-	"github.com/redwanghb/coraza/v3/experimental/plugins/macro"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	utils "github.com/redwanghb/coraza/v3/internal/strings"
+	"waap/experimental/plugins/macro"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/corazawaf"
+	utils "waap/internal/strings"
 )
 
 // Action Group: Metadata

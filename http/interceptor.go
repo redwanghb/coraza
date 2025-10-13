@@ -13,7 +13,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/types"
 )
 
 // rwInterceptor intercepts the ResponseWriter, so it can track response size
@@ -83,7 +83,7 @@ func (i *rwInterceptor) cleanHeaders() {
 // If the body isn't accessible or the mime type isn't processable, the response
 // body is being writen to the delegate response writer directly.
 func (i *rwInterceptor) Write(b []byte) (int, error) {
-	if i.tx.IsInterrupted() {
+	if i.tx.IsInterrupted() && i.tx.Interruption().Action != "allow" {
 		// if there is an interruption it must be from at least phase 4 and hence
 		// WriteHeader or Write should have been called and hence the status code
 		// has been flushed to the delegated response writer.
@@ -95,13 +95,15 @@ func (i *rwInterceptor) Write(b []byte) (int, error) {
 		i.WriteHeader(http.StatusOK)
 	}
 
+	// TODO 这里第一个条件通过配置可以满足，第二个条件限制后续需要优化
 	if i.tx.IsResponseBodyAccessible() && i.tx.IsResponseBodyProcessable() {
 		// we only buffer the response body if we are going to access
 		// to it, otherwise we just send it to the response writer.
 		// 为了支持SSE的流式返回处理，增加HTTP.ResponseWriter入参，用于快速将服务器返回内容流式返回给客户端
 		it, n, err := i.tx.WriteResponseBody(b, i.w)
 		// it, n, err := i.tx.WriteResponseBody(b)
-		if it != nil {
+		if it != nil && it.Action != "allow" {
+			fmt.Println("it is not nil")
 			// if there is an interruption we must clean the headers and override the status code
 			i.cleanHeaders()
 			i.Header().Set("Content-Length", "0")
@@ -110,6 +112,7 @@ func (i *rwInterceptor) Write(b []byte) (int, error) {
 			i.flushWriteHeader()
 			return 0, nil
 		}
+		fmt.Println("finish write response body")
 		return n, err
 	}
 
@@ -153,7 +156,6 @@ func wrap(w http.ResponseWriter, r *http.Request, tx types.Transaction) (
 	http.ResponseWriter,
 	func(types.Transaction, *http.Request) error,
 ) { // nolint:gocyclo
-
 	i := &rwInterceptor{w: w, tx: tx, proto: r.Proto, statusCode: 200}
 
 	responseProcessor := func(tx types.Transaction, r *http.Request) error {

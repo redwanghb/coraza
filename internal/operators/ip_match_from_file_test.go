@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/io"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/io"
 )
 
 func TestFromFile(t *testing.T) {

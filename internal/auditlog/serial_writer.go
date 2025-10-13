@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 // serialWriter is used to store logs in a single file
@@ -21,7 +21,8 @@ type serialWriter struct {
 func (sl *serialWriter) Init(c plugintypes.AuditLogConfig) error {
 	sl.Closer = NoopCloser
 	if c.Target == "" {
-		return nil
+		// 修改如果Target为空使用默认输出为/dev/stdout
+		c.Target = "/dev/stdout"
 	}
 
 	var f io.Writer
@@ -47,7 +48,9 @@ func (sl *serialWriter) Init(c plugintypes.AuditLogConfig) error {
 
 func (sl *serialWriter) Write(al plugintypes.AuditLog) error {
 	if sl.formatter == nil {
-		return nil
+		// 修改成当AuditLogConfig未设置Formatter的时候，使用nativeFormatter
+		sl.formatter = &nativeFormatter{}
+		// return nil
 	}
 
 	bts, err := sl.formatter.Format(al)

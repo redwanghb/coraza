@@ -4,8 +4,8 @@
 package experimental
 
 import (
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/internal/corazawaf"
+	"waap/types"
 )
 
 type Options = corazawaf.Options

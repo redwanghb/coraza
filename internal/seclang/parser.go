@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/internal/environment"
-	"github.com/redwanghb/coraza/v3/internal/io"
+	"waap/internal/corazawaf"
+	"waap/internal/environment"
+	"waap/internal/io"
 )
 
 // maxIncludeRecursion is used to avoid DDOS by including files that include
@@ -63,7 +63,6 @@ func (p *Parser) FromFile(profilePath string) error {
 			p.currentFile = ""
 			return fmt.Errorf("failed to readfile: %s", err.Error())
 		}
-
 		err = p.parseString(string(file))
 		if err != nil {
 			// we don't use defer for this as tinygo does not seem to like it

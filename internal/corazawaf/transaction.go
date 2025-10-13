@@ -19,21 +19,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/redwanghb/coraza/v3/collection"
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/auditlog"
-	"github.com/redwanghb/coraza/v3/internal/bodyprocessors"
-	"github.com/redwanghb/coraza/v3/internal/collections"
-	"github.com/redwanghb/coraza/v3/internal/cookies"
-	"github.com/redwanghb/coraza/v3/internal/corazarules"
-	"github.com/redwanghb/coraza/v3/internal/corazatypes"
-	"github.com/redwanghb/coraza/v3/internal/environment"
-	"github.com/redwanghb/coraza/v3/internal/llmguard"
-	stringsutil "github.com/redwanghb/coraza/v3/internal/strings"
-	urlutil "github.com/redwanghb/coraza/v3/internal/url"
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/collection"
+	"waap/debuglog"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/auditlog"
+	"waap/internal/bodyprocessors"
+	"waap/internal/collections"
+	"waap/internal/cookies"
+	"waap/internal/corazarules"
+	"waap/internal/corazatypes"
+	"waap/internal/environment"
+	"waap/internal/llmguard"
+	stringsutil "waap/internal/strings"
+	urlutil "waap/internal/url"
+	"waap/types"
+	"waap/types/variables"
 )
 
 // Transaction is created from a WAF instance to handle web requests and responses,
@@ -136,6 +136,18 @@ type Transaction struct {
 	// 新增响应头信息，用于保存字符串形式的响应头
 	// TODO 响应头中不状态码信息，当前从net/http库无法一次性获取完整的信息，后续完善
 	responseHeader string
+
+	// 判断是否为SSE流式传输
+	isSSE bool
+}
+
+// 新增判断是否为SSE流式传输的方法
+func (tx *Transaction) IsSSE(s string) bool {
+	if tx.isSSE {
+		return true
+	}
+	tx.isSSE = IsSSEContent(s)
+	return tx.isSSE
 }
 
 // 新增将http.Request的请求头和Host写入requestHeader的方法
@@ -356,6 +368,9 @@ func (tx *Transaction) AddRequestHeader(key string, value string) {
 			tx.variables.reqbodyProcessor.Set("URLENCODED")
 		} else if strings.HasPrefix(val, "multipart/form-data") {
 			tx.variables.reqbodyProcessor.Set("MULTIPART")
+			// TODO 临时测试增加，后续需要优化这部分处理逻辑，自动识别请求体内容按照对应的检测方法检测
+		} else if strings.HasPrefix(val, "application/json") {
+			tx.variables.reqbodyProcessor.Set("JSON")
 		}
 	case "cookie":
 		// 4.2.  Cookie
@@ -1012,7 +1027,6 @@ func (tx *Transaction) ProcessRequestBody() (*types.Interruption, error) {
 	if tx.RuleEngine == types.RuleEngineOff {
 		return nil, nil
 	}
-
 	if tx.interruption != nil {
 		tx.debugLogger.Error().Msg("Calling ProcessRequestBody but there is a preexisting interruption")
 		return tx.interruption, nil
@@ -1043,7 +1057,8 @@ func (tx *Transaction) ProcessRequestBody() (*types.Interruption, error) {
 		return nil, err
 	}
 
-	//TODO 添加LLMGuard针对req.Body的prompt injection检查处理
+	//基于第三方组件检测大模型问题是否有攻击
+	// TODO 增加关闭功能开关
 	// 判断请求体是否为json结构
 	// TODO 如何判定是想要检测的API和内容是json结构
 	if llmguard.ContainsContentType(mime) {
@@ -1053,26 +1068,76 @@ func (tx *Transaction) ProcessRequestBody() (*types.Interruption, error) {
 		if err != nil {
 			return nil, err
 		}
-		// 调用LLMGuard接口
-		detection, _ := llmguard.DetectQuestion(s.String())
-		if detection {
-			//TODO 优化，根据配置的规则选择是重定向、阻断还是放行
-			tx.interruption = &types.Interruption{
-				RuleID: 90001,
-				Action: "deny",
-				Status: 403,
+
+		// TODO 提取LLM问题，当前固定支持ollama，后续扩展其他类型，需要提前判断是什么API架构
+		var question string
+		questionInfo, err, ok := llmguard.ParseLLMRequest("ollama", tx.variables.requestURIRaw.Get(), s.String())
+		if !ok {
+			tx.debugLogger.Debug().Err(err).Msg("failed to parse LLM request")
+		} else {
+			question = questionInfo.GetQuestion()
+			// 调用LLMGuard接口
+			detection, scannersResult := llmguard.DetectQuestion(question, tx.debugLogger)
+			if detection {
+				//TODO 优化，根据配置的规则选择是重定向、阻断还是放行
+				// 判断ScannersResult的结果属于哪一种类型
+				var action types.LLMAction
+				var severity types.RuleSeverity
+				var ruleID int
+				scanner := scannersResult.GetScannerFromResult()
+				// 根据类型获取处理结果和告警等级
+				llmClassificationConfig := tx.WAF.GetLLMClassificationConfig()
+
+				config, err := llmClassificationConfig.LLMCategoryConfig(string(scanner))
+				if err != nil {
+					tx.debugLogger.Debug().Err(err).Msg("failed to get LLM category config")
+					action = types.LLMActionAllow
+					severity = types.RuleSeverityUnknown
+					ruleID = 0
+				} else {
+					action = config.GetAction()
+					severity = config.GetSeverity()
+					ruleID = config.GetID()
+				}
+
+				switch action {
+				case types.LLMActionBlock:
+					tx.interruption = &types.Interruption{
+						Status: 403,
+						Action: "deny",
+						RuleID: ruleID,
+					}
+				case types.LLMActionWarn:
+					tx.interruption = &types.Interruption{
+						RuleID: ruleID,
+						Action: "warn",
+						Status: 200,
+						Data:   llmguard.GetLLMResMessage(questionInfo),
+					}
+				case types.LLMActionDesentize:
+					return nil, fmt.Errorf("desentize action not supported right now")
+				default:
+					tx.interruption = nil
+				}
+
+				// 将tx.audit设置为true，方便后续发送告警日志
+				tx.audit = true
+				// TODO 需要构造[]types.MatchData，并写将内容写入到tx的MatchRules结构体中，参考tx.MatchRule(r, matchedValues)
+				matchData := corazarules.MatchData{
+					Variable_:   variables.RequestBody,
+					Key_:        "LLM Question",
+					Value_:      question,
+					ChainLevel_: 0,
+				}
+				tx.matchVariable(&matchData)
+
+				// 将告警等级写入tx.variables.highestSeverity
+				tx.variables.highestSeverity.Set(severity.String())
+
+				return tx.interruption, nil
+			} else {
+				reader = strings.NewReader(s.String())
 			}
-			// 将tx.audit设置为true，方便后续发送告警日志
-			tx.audit = true
-			// TODO 需要构造[]types.MatchData，并写将内容写入到tx的MatchRules结构体中，参考tx.MatchRule(r, matchedValues)
-			matchData := corazarules.MatchData{
-				Variable_:   variables.RequestBody,
-				Key_:        "LLM Question",
-				Value_:      s.String(),
-				ChainLevel_: 0,
-			}
-			tx.matchVariable(&matchData)
-			return tx.interruption, nil
 		}
 
 	}
@@ -1104,7 +1169,6 @@ func (tx *Transaction) ProcessRequestBody() (*types.Interruption, error) {
 	tx.debugLogger.Debug().
 		Str("body_processor", rbp).
 		Msg("Attempting to process request body")
-
 	if err := bodyprocessor.ProcessRequest(reader, tx.Variables(), plugintypes.BodyProcessorOptions{
 		Mime:        mime,
 		StoragePath: tx.WAF.UploadDir,
@@ -1186,80 +1250,104 @@ func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*typ
 	// 新增SSE响应体中，LLM回答内容的缓存；
 	// 如果缓存空间达到上限，或者要缓存的内容大小超过缓存空间剩余的大小，清理要存入内容2倍大小的空间，如果2倍大小超过缓存上限
 	// 清理1倍大小的空间
-	if IsSSEContent(tx.variables.responseContentType.Get()) {
+	if tx.IsSSE(tx.variables.responseContentType.Get()) {
 		buf := new(strings.Builder)
 		_, err := buf.Write(b)
 		if err != nil {
 			tx.debugLogger.Error().Err(err)
+			return tx.interruption, 0, err
 		}
-		// 提取LLM回答的内容
-		ans, ok := llmguard.ResponseBodyExtract(buf.String())
-		if ok {
-			ansByte := []byte(ans)
-			leftLength := tx.ResponseBodyLimit - tx.responseBodyLLMContent.length
-			// 判断tx.responseBodyLLMContent缓存长度空间是否足够
-			if tx.responseBodyLLMContent.length == tx.ResponseBodyLimit || int64(len(ansByte)) >= leftLength {
-				tmpBytes := tx.responseBodyLLMContent.buffer.Bytes()
-				tx.responseBodyLLMContent.Reset()
-				// 如果2倍长度限制小于缓存大小，清空2倍的空间
-				if int64(2*len(ansByte)) < tx.ResponseBodyLimit {
-					tmpBytes = tmpBytes[2*len(ansByte):]
-				} else {
-					// 清空1倍的空间
-					tmpBytes = tmpBytes[len(ansByte):]
+
+		// 这里首先要判断的是要写入的内容是否超出了tx.ResponseBodyLimit的限制
+		// 如果超出了限制，那么只针对限制只内的内容做特征检测，不做LLM检测，因为无法进行LLM内容检测了
+		if writingBytes > tx.ResponseBodyLimit {
+			tx.debugLogger.Error().Int("ResponseBodyLimit is too small, you need to set to %i", int(writingBytes))
+			w, err := tx.responseBodyBuffer.Write(b[:tx.ResponseBodyLimit])
+			if err != nil {
+				return nil, 0, err
+			}
+			// 首先进行特征检测
+			// 没想好是做全部规则的特征检测，还是部分特定规则的特征检测
+			tx.interruption, err = tx.ProcessResponseBody()
+			if err != nil {
+				return nil, w, err
+			}
+			// 如果tx.interruption不为nil并且处理动作是allow的话，那么需要进行流式返回内容
+			if tx.interruption != nil && tx.interruption.Action == "allow" {
+				_, err = io.Copy(rw, strings.NewReader(buf.String()))
+				if err != nil {
+					tx.debugLogger.Debug().Err(err).Msg("io copy error ")
 				}
-				tx.responseBodyLLMContent.Write(tmpBytes)
+				flusher, ok := rw.(http.Flusher)
+				if ok {
+					flusher.Flush()
+				}
 			}
-			tx.responseBodyLLMContent.Write(ansByte)
+			// 针对被截断的内容，不进行LLM检测处理，直接返回
+			return tx.interruption, int(w), nil
 		}
 
-		//组合答案并做LLMGuard回答内容检查
-		ansPartial := new(strings.Builder)
-		ansPartial.Write(tx.responseBodyLLMContent.buffer.Bytes())
-		request := new(strings.Builder)
-		request.Write(tx.requestBodyBuffer.buffer.Bytes())
-		detection, _ := llmguard.DetectAnswer(request.String(), ansPartial.String())
-		if detection {
-			tx.interruption = &types.Interruption{
-				RuleID: 90002,
-				Action: "deny",
-				Status: 403,
-			}
-			// 将tx.audit设置为true，方便发送告警日志
-			tx.audit = true
+		// 处理responseBodyBuffer的大小，如果写入数据后大于responseBodyLimit，那么需要清空responseBodyBuffer
+		if tx.responseBodyBuffer.length+writingBytes > tx.ResponseBodyLimit {
+			tx.responseBodyBuffer.Reset()
+		}
+		w, err := tx.responseBodyBuffer.Write(b)
+		if err != nil {
+			return tx.interruption, 0, err
+		}
 
-			// 构造匹配信息，写入到tx.variables.matchVar中，作为后续使用的payload
-			matchData := &corazarules.MatchData{
-				Variable_:   variables.ResponseBody,
-				Key_:        "LLM Answer",
-				Value_:      ansPartial.String(),
-				ChainLevel_: 0,
+		// 首先进行特征检测，如果命中特征检测规则，并且处理动作是deny，直接返回，不进行LLM检测
+		// 没想好是做全部规则的特征检测，还是部分特定规则的特征检测
+		tx.interruption, err = tx.ProcessResponseBody()
+		if err != nil {
+			return nil, 0, err
+		}
+		if tx.interruption != nil && tx.interruption.Action == "deny" {
+			tx.audit = true
+			return tx.interruption, w, nil
+		}
+
+		// 提取LLM回答的内容
+		resInfo, err, ok := llmguard.ParseLLMResponse("ollama", tx.variables.requestURIRaw.Get(), buf.String())
+		if !ok {
+			tx.debugLogger.Debug().Err(err).Msg("failed to parse LLM response")
+			// 待确定是否要返回
+			// return tx.interruption, w, nil
+		} else {
+			err = tx.detectAnswer(resInfo)
+			if err != nil {
+				tx.debugLogger.Error().Err(err).Msg("failed to detect answer with LLMGuard")
+				return tx.interruption, 0, err
 			}
-			tx.matchVariable(matchData)
-			return tx.interruption, 0, nil
 		}
 
 		// 新增responseBodyBuffer的SSE处理
 		// 每次接收到一个服务器json应答立即进行检测并返回给客户端
-		if writingBytes > tx.ResponseBodyLimit {
-			tx.debugLogger.Error().Int("ResponseBodyLimit is too small, you need to set to %i", int(writingBytes))
-		}
-		w, err := tx.responseBodyBuffer.Write(b[:writingBytes])
-		if err != nil {
-			return nil, 0, err
-		}
-		tx.interruption, err = tx.ProcessResponseBody()
-		if err != nil {
-			return nil, w, err
+
+		// 如果未检测到任何有问题的回答，或者检测到以后的处理动作是allow，那么直接进行转发
+		if tx.interruption == nil || tx.interruption.Action == "allow" {
+			_, err = io.Copy(rw, strings.NewReader(buf.String()))
+			if err != nil {
+				tx.debugLogger.Debug().Err(err).Msg("io copy error ")
+			}
+			flusher, ok := rw.(http.Flusher)
+			if ok {
+				flusher.Flush()
+			}
 		}
 
-		// 流式发送服务器应答内容
-		reader, err := tx.responseBodyBuffer.Reader()
-		if err != nil {
-			return nil, w, err
+		// 如果处理动作是warn，那么需要将告警信息写入到rw中，并返回给客户端
+		if tx.interruption != nil && tx.interruption.Action == "warn" {
+			_, err = io.Copy(rw, strings.NewReader(tx.interruption.Data))
+			if err != nil {
+				tx.debugLogger.Debug().Err(err).Msg("io copy error ")
+			}
+			flusher, ok := rw.(http.Flusher)
+			if ok {
+				flusher.Flush()
+			}
+
 		}
-		_, _ = io.Copy(rw, reader)
-		tx.responseBodyBuffer.Reset()
 		return tx.interruption, w, nil
 	}
 
@@ -1295,7 +1383,106 @@ func (tx *Transaction) WriteResponseBody(b []byte, rw http.ResponseWriter) (*typ
 	if runProcessResponseBody {
 		_, err = tx.ProcessResponseBody()
 	}
+
 	return tx.interruption, int(w), err
+}
+
+// 检查回答的内容是否命中了大模型的检测结果
+func (tx *Transaction) detectAnswer(resInfo *llmguard.LLMResponseInfo) error {
+	if resInfo == nil {
+		tx.debugLogger.Error().Msg("resInfo is nil, cannot detect answer")
+		return fmt.Errorf("resInfo is nil, cannot detect answer")
+	}
+
+	// 如果命中检测结果，但是处理动作是allow，那么直接转发
+	if tx.interruption != nil && tx.interruption.Action == "allow" {
+		return nil
+	}
+
+	ansByte := []byte(resInfo.GetAnswer())
+
+	// 判断tx.responseBodyLLMContent缓存长度空间是否足够
+	leftLength := tx.ResponseBodyLimit - tx.responseBodyLLMContent.length
+	if tx.responseBodyLLMContent.length == tx.ResponseBodyLimit || int64(len(ansByte)) >= leftLength {
+		// 将缓存空间内数据提取转存用于清理空间
+		tmpBytes := tx.responseBodyLLMContent.buffer.Bytes()
+		tx.responseBodyLLMContent.Reset()
+		// 如果2倍长度限制小于缓存大小，清空2倍的空间，如果回复内容IsDone()为true，代表最后一段内容，不需要清空2倍的空间
+		if int64(2*len(ansByte)) < tx.ResponseBodyLimit && !resInfo.IsDone() {
+			tmpBytes = tmpBytes[2*len(ansByte):]
+		} else {
+			// 清空1倍的空间
+			tmpBytes = tmpBytes[len(ansByte):]
+		}
+		tx.responseBodyLLMContent.Write(tmpBytes)
+	}
+	tx.responseBodyLLMContent.Write(ansByte)
+	//组合答案并做LLMGuard回答内容检查
+	ansPartial := new(strings.Builder)
+	ansPartial.Write(tx.responseBodyLLMContent.buffer.Bytes())
+	//需要把问题也一起发送给llmguard进行检查
+	resquest := new(strings.Builder)
+	resquest.Write(tx.requestBodyBuffer.buffer.Bytes())
+	detection, scannersResult := llmguard.DetectAnswer(resquest.String(), ansPartial.String())
+	if detection {
+		var (
+			action   types.LLMAction
+			severity types.RuleSeverity
+			ruleID   int
+		)
+		scanner := scannersResult.GetScannerFromResult()
+		llmClassificationConfig := tx.WAF.GetLLMClassificationConfig()
+		config, err := llmClassificationConfig.LLMCategoryConfig(string(scanner))
+		if err != nil {
+			tx.debugLogger.Debug().Err(err).Msg("failed to get LLM category config")
+			action = types.LLMActionAllow
+			severity = types.RuleSeverityUnknown
+			ruleID = 0
+		} else {
+			action = config.GetAction()
+			severity = config.GetSeverity()
+			ruleID = config.GetID()
+		}
+		tx.audit = true
+		tx.variables.highestSeverity.Set(severity.String())
+
+		switch action {
+		case types.LLMActionBlock:
+			tx.interruption = &types.Interruption{
+				Status: 403,
+				Action: "deny",
+				RuleID: ruleID,
+			}
+		case types.LLMActionWarn:
+			tx.interruption = &types.Interruption{
+				RuleID: ruleID,
+				Action: "warn",
+				Status: 200,
+				Data:   llmguard.GetLLMRespMessage(resInfo),
+			}
+		case types.LLMActionDesentize:
+			tx.debugLogger.Error().Msg("desentize action not supported right now")
+			return fmt.Errorf("desentize action not supported right now")
+		case types.LLMActionAllow:
+			tx.interruption = &types.Interruption{
+				RuleID: ruleID,
+				Action: "allow",
+				Status: 200,
+			}
+		default:
+			tx.interruption = nil
+		}
+
+		// 构造匹配信息，写入到tx.variables.matchVar中，作为后续使用的payload
+		matchData := &corazarules.MatchData{
+			Variable_:   variables.ResponseBody,
+			Key_:        "LLM Answer",
+			Value_:      ansPartial.String(),
+			ChainLevel_: 0,
+		}
+		tx.matchVariable(matchData)
+	}
+	return nil
 }
 
 // ReadResponseBodyFrom writes bytes from a reader into the response body
@@ -1376,11 +1563,12 @@ func (tx *Transaction) ProcessResponseBody() (*types.Interruption, error) {
 		return nil, nil
 	}
 
-	if tx.interruption != nil {
+	if tx.interruption != nil && tx.interruption.Action != "allow" {
 		tx.debugLogger.Error().Msg("Calling ProcessResponseBody but there is a preexisting interruption")
 		return tx.interruption, nil
 	}
 
+	// TODO 在SSE模式的时候，这里会提前返回，不会继续检查响应体的内容，由于是在处理第一个响应体后，会将tx.lastPhase修改为非PhaseResponseHeaders
 	if tx.lastPhase != types.PhaseResponseHeaders {
 		if tx.lastPhase >= types.PhaseResponseBody {
 			// Phase already evaluated or skipped
@@ -1422,6 +1610,7 @@ func (tx *Transaction) ProcessResponseBody() (*types.Interruption, error) {
 			tx.generateResponseBodyError(err)
 		}
 	} else {
+		tx.debugLogger.Debug().Str("body_processor", "").Msg("Body processor is nil, next to eval rule")
 		buf := new(strings.Builder)
 		length, err := io.Copy(buf, reader)
 		if err != nil {
@@ -1431,6 +1620,9 @@ func (tx *Transaction) ProcessResponseBody() (*types.Interruption, error) {
 		tx.variables.responseBody.Set(buf.String())
 	}
 	tx.WAF.Rules.Eval(types.PhaseResponseBody, tx)
+	if tx.interruption != nil {
+		tx.audit = true
+	}
 	return tx.interruption, nil
 }
 
@@ -1453,6 +1645,7 @@ func (tx *Transaction) ProcessLogging() {
 		return
 	}
 
+	tx.debugLogger.Debug().Bool("tx.audit", tx.audit).Msg("tx audit status")
 	if tx.AuditEngine == types.AuditEngineRelevantOnly && !tx.audit {
 		// Transaction marked not for audit logging
 		tx.debugLogger.Debug().
@@ -1472,6 +1665,11 @@ func (tx *Transaction) ProcessLogging() {
 				Msg("Transaction status not marked for audit logging")
 			return
 		}
+	}
+
+	// TODO 临时增加，如果未设置tx.audit，默认不发送日志
+	if !tx.audit {
+		return
 	}
 
 	tx.debugLogger.Debug().
@@ -1593,10 +1791,11 @@ func (tx *Transaction) AuditLog() *auditlog.Log {
 		// 从tx.requestHeader获取请求头部分内容
 		RequestHeader_: tx.requestHeader,
 		// 从tx.responseHeader获取响应头部分内容
-		ResponseHeader_: tx.responseHeader,
-		LLMQuestion_:    question,
-		LLMAnswer_:      answer,
-		Action_:         action,
+		ResponseHeader_:  tx.responseHeader,
+		LLMQuestion_:     question,
+		LLMAnswer_:       answer,
+		Action_:          action,
+		HighestSeverity_: tx.variables.highestSeverity.Get(),
 	}
 
 	for _, part := range tx.AuditLogParts {

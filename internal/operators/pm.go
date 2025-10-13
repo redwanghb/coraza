@@ -10,8 +10,8 @@ import (
 
 	ahocorasick "github.com/petar-dambovaliev/aho-corasick"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/memoize"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/memoize"
 )
 
 type pm struct {

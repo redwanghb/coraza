@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 var transformations = map[string]plugintypes.Transformation{}

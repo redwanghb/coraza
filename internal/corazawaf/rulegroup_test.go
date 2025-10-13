@@ -6,7 +6,7 @@ package corazawaf
 import (
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/macro"
+	"waap/experimental/plugins/macro"
 )
 
 func newTestRule(id int) *Rule {

@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type concurrentWriter struct {

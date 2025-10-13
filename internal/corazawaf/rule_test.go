@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/macro"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/corazarules"
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/debuglog"
+	"waap/experimental/plugins/macro"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/corazarules"
+	"waap/types"
+	"waap/types/variables"
 )
 
 func TestMatchEvaluate(t *testing.T) {

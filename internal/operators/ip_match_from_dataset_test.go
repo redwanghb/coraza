@@ -7,7 +7,7 @@ import (
 	_ "fmt"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func TestIpMatchFromDataset(t *testing.T) {

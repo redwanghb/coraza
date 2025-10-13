@@ -31,9 +31,9 @@ import (
 
 	coreruleset "github.com/corazawaf/coraza-coreruleset/v4"
 	crstests "github.com/corazawaf/coraza-coreruleset/v4/tests"
-	"github.com/redwanghb/coraza/v3"
-	txhttp "github.com/redwanghb/coraza/v3/http"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap"
+	txhttp "waap/http"
+	"waap/types"
 )
 
 func BenchmarkCRSCompilation(b *testing.B) {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
+	"waap/debuglog"
 )
 
 type Scanner string
@@ -36,7 +38,64 @@ var (
 	ReadingTime        Scanner = "ReadingTime"
 	Relevance          Scanner = "Relevance"
 	Sensitive          Scanner = "Sensitive"
+	Unknown            Scanner = "unknown"
 )
+
+var ScannerToString = map[Scanner]string{
+	Anonymize:          "Anonymize",
+	BanCode:            "Bancode",
+	BanCompetitors:     "BanCompetitors",
+	BanSubstrings:      "BanSubstrings",
+	BanTopics:          "BanTopics",
+	Code:               "Code",
+	Gibberish:          "Gibberish",
+	InvisibleText:      "InvisibleText",
+	Language:           "Language",
+	PromptInjection:    "PromptInjection",
+	Regex:              "Regex",
+	Secrets:            "Secrets",
+	Sentiment:          "Sentiment",
+	TokenLimit:         "TokenLimit",
+	Toxicity:           "Toxicity",
+	Bias:               "Bias",
+	Deanonymize:        "Deanonymize",
+	FactualConsistency: "FactualConsistency",
+	JSON:               "JSON",
+	LanguageSame:       "LanguageSame",
+	MaliciousURLs:      "MaliciousURLs",
+	NoRefusal:          "NoRefusal",
+	ReadingTime:        "ReadingTime",
+	Relevance:          "Relevance",
+	Sensitive:          "Sensitive",
+}
+
+var StringToScanner = map[string]Scanner{
+	"Anonymize":          Anonymize,
+	"Bancode":            BanCode,
+	"BanCompetitors":     BanCompetitors,
+	"BanSubstrings":      BanSubstrings,
+	"BanTopics":          BanTopics,
+	"Code":               Code,
+	"Gibberish":          Gibberish,
+	"InvisibleText":      InvisibleText,
+	"Language":           Language,
+	"PromptInjection":    PromptInjection,
+	"Regex":              Regex,
+	"Secrets":            Secrets,
+	"Sentiment":          Sentiment,
+	"TokenLimit":         TokenLimit,
+	"Toxicity":           Toxicity,
+	"Bias":               Bias,
+	"Deanonymize":        Deanonymize,
+	"FactualConsistency": FactualConsistency,
+	"JSON":               JSON,
+	"LanguageSame":       LanguageSame,
+	"MaliciousURLs":      MaliciousURLs,
+	"NoRefusal":          NoRefusal,
+	"ReadingTime":        ReadingTime,
+	"Relevance":          Relevance,
+	"Sensitive":          Sensitive,
+}
 
 type ScannersResult struct {
 	Anonymize          float32 `json:"Anonymize,omitempty"`
@@ -64,6 +123,21 @@ type ScannersResult struct {
 	ReadingTime        float32 `json:"ReadingTime,omitempty"`
 	Relevance          float32 `json:"Relevance,omitempty"`
 	Sensitive          float32 `json:"Sensitive,omitempty"`
+}
+
+func (s *ScannersResult) GetScannerFromResult() Scanner {
+	value := reflect.ValueOf(*s)
+	scanner := reflect.TypeOf(*s)
+	var maxScanner Scanner
+	var maxValue float32
+	for i := 0; i < value.NumField(); i++ {
+		fieldValue := value.Field(i).Float()
+		if float32(fieldValue) > maxValue {
+			maxValue = float32(fieldValue)
+			maxScanner = Scanner(scanner.Field(i).Name)
+		}
+	}
+	return maxScanner
 }
 
 type LLMGuardRequest interface {
@@ -212,12 +286,7 @@ const (
 )
 
 // 对外提供大模型检测调用接口，用于请求体检测
-func DetectQuestion(reqBody string) (bool, ScannersResult) {
-	//基于请求体内容提取问题
-	question, ok := ContentExtractFromJSONDATA(reqBody, REQUESTBODY)
-	if !ok {
-		return false, ScannersResult{}
-	}
+func DetectQuestion(question string, logger debuglog.Logger) (bool, ScannersResult) {
 	//调用接口地址url
 	url := LlmGuardClient.config.Address + REQAPIPATH
 	//调用接口返回结果
@@ -228,6 +297,7 @@ func DetectQuestion(reqBody string) (bool, ScannersResult) {
 	//提取结果，判定黑白，如果是黑就返回true，是白就返回false，如果是黑，需要返回命中了什么检测
 	res, err := LLMguardScanWithTransport(url, promptRequest)
 	if err != nil {
+		logger.Debug().Err(err)
 		return false, ScannersResult{}
 	}
 	if !res.Valid() {
@@ -258,4 +328,8 @@ func DetectAnswer(req string, ans string) (bool, ScannersResult) {
 	}
 
 	return false, res.Scanners
+}
+
+func GetScannerFromResult(result *ScannersResult) Scanner {
+	return Unknown
 }

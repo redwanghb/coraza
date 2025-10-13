@@ -6,10 +6,11 @@ package coraza
 import (
 	"io/fs"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/debuglog"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/auditlog"
+	"waap/internal/corazawaf"
+	"waap/types"
 )
 
 // WAFConfig controls the behavior of the WAF.
@@ -63,6 +64,14 @@ type WAFConfig interface {
 
 	// WithRootFS configures the root file system.
 	WithRootFS(fs fs.FS) WAFConfig
+
+	// 设置auditlogConfig
+	WithAuditLogWriter(name string) WAFConfig
+
+	// 设置AuditLogWriterConfig
+	WithAuditLogWriterConfig(conf *plugintypes.AuditLogConfig) WAFConfig
+	// 设置llmClassificationConfig
+	WithLLMClassificationConfig(config *types.ClassificationConfig) WAFConfig
 }
 
 // NewWAFConfig creates a new WAFConfig with the default settings.
@@ -105,6 +114,42 @@ type wafConfig struct {
 	debugLogger              debuglog.Logger
 	errorCallback            func(rule types.MatchedRule)
 	fsRoot                   fs.FS
+	// 新增auditLogConfig用于配置audilog日志写入地点
+	auditLogWriterConfig *plugintypes.AuditLogConfig
+
+	// 新增LLM ClassificationConfig，用于配置LLM检测结果分类配置
+	llmClassificationConfig *types.ClassificationConfig
+}
+
+// 设置llmClasificationConfig
+func (c *wafConfig) WithLLMClassificationConfig(config *types.ClassificationConfig) WAFConfig {
+	if config != nil {
+		c.llmClassificationConfig = config
+	}
+	return c
+}
+
+// 设置auditLogWriterConfig
+func (c *wafConfig) WithAuditLogWriterConfig(conf *plugintypes.AuditLogConfig) WAFConfig {
+	if conf != nil {
+		c.auditLogWriterConfig = conf
+	}
+	return c
+}
+
+// 设置auditLogConfig.writer
+func (c *wafConfig) WithAuditLogWriter(name string) WAFConfig {
+	if c.auditLog != nil {
+		return c
+	}
+	writer, err := auditlog.GetWriter(name)
+	if err != nil {
+		return c
+	}
+	conf := NewAuditLogConfig().(*auditLogConfig)
+	conf.writer = writer
+	c.auditLog = conf
+	return c
 }
 
 func (c *wafConfig) WithRules(rules ...*corazawaf.Rule) WAFConfig {
@@ -214,4 +259,16 @@ func (c *auditLogConfig) WithParts(parts types.AuditLogParts) AuditLogConfig {
 func (c *auditLogConfig) clone() *auditLogConfig {
 	ret := *c // copy
 	return &ret
+}
+
+// 新增AuditLogWriterConfig
+func NewAuditLogWriterConfig(db *plugintypes.DB) *plugintypes.AuditLogConfig {
+	alc := &plugintypes.AuditLogConfig{
+		Target:   "",
+		FileMode: 0644,
+		Dir:      "",
+		DirMode:  0755,
+	}
+	alc.DB = db
+	return alc
 }

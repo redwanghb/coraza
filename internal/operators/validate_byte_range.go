@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type validateByteRange struct {

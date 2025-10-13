@@ -8,8 +8,8 @@ package operators
 import (
 	"strconv"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/macro"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/macro"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type lt struct {

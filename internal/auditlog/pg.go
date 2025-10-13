@@ -6,9 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"waap/experimental/plugins/plugintypes"
+	"waap/types"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
 )
 
 // TODO 待设计结构体内容
@@ -32,8 +34,16 @@ func (pg *pgWriter) Init(c plugintypes.AuditLogConfig) error {
 }
 
 func (pg *pgWriter) init(c plugintypes.AuditLogConfig) error {
-	pg.DBName = DBNAME
-	pg.TableName = TABLENAME
+	// 初始化库名和表名
+	if pg.DBName = c.DB.DBName(); pg.DBName == "" {
+		pg.DBName = DEFAULTDBNAME
+	}
+	// TODO 表明建议使用DEFAULTTABLENAME，对应着地址列，后续需要优化成跟随配置文件创建表名
+	if pg.TableName = c.DB.TableName(); pg.TableName == "" {
+		pg.TableName = DEFAULTTABLENAME
+	}
+
+	// 初始化地址池
 	pool, err := pg.initPool(c)
 	if err != nil {
 		return err
@@ -63,6 +73,7 @@ func (pg *pgWriter) init(c plugintypes.AuditLogConfig) error {
 	return nil
 }
 
+// TODO 优化地址池参数来源
 func (pg *pgWriter) initPool(c plugintypes.AuditLogConfig) (*pgxpool.Pool, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.DB.User(), c.DB.Password(), c.DB.Address(), c.DB.Port(), pg.DBName)
 	if !c.DB.EnableTLS() {
@@ -96,6 +107,7 @@ func (pg *pgWriter) Write(al plugintypes.AuditLog) error {
 		res_body    string
 		req_header  string
 		res_header  string
+		severity    types.RuleSeverity
 	)
 	if al.Transaction().HasRequest() {
 		uri = al.Transaction().Request().URI()
@@ -111,12 +123,15 @@ func (pg *pgWriter) Write(al plugintypes.AuditLog) error {
 		res_body = al.Transaction().Response().Body()
 		res_header = al.Transaction().ResponseHeader()
 	}
+
+	severity, _ = types.ParseRuleSeverity(al.Transaction().HighestSeverity())
+
 	_, err := pg.Pool.Exec(
 		context.Background(),
 		pg.sql,
 		al.Transaction().UnixTimestamp()/1000000,
 		uuid.New().String(),
-		al.Transaction().HighestSeverity(),
+		severity.String(),
 		// TODO Category，暂时为空，等后续处理，当前规则结构中不支持Category定义，考虑使用Category与规则ID匹配的方式处理
 		"",
 		// TODO IOC，目前先使用Message的内容作为IOC，待后续完善

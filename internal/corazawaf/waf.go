@@ -14,13 +14,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/auditlog"
-	"github.com/redwanghb/coraza/v3/internal/environment"
-	stringutils "github.com/redwanghb/coraza/v3/internal/strings"
-	"github.com/redwanghb/coraza/v3/internal/sync"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/debuglog"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/auditlog"
+	"waap/internal/environment"
+	stringutils "waap/internal/strings"
+	"waap/internal/sync"
+	"waap/types"
 )
 
 // WAF instance is used to store configurations and rules
@@ -135,6 +135,9 @@ type WAF struct {
 
 	// Configures the maximum number of ARGS that will be accepted for processing.
 	ArgumentLimit int
+
+	// 设置LLM检测类别的具体配置，包括处置动作、威胁等级、标签等
+	LLMClassificationConfig *types.ClassificationConfig
 }
 
 // Options is used to pass options to the WAF instance
@@ -314,11 +317,14 @@ func NewWAF() *WAF {
 			types.AuditLogPartRequestHeaders,
 			types.AuditLogPartRequestBody,
 			types.AuditLogPartResponseHeaders,
+			// 新增设置响应体也写入auditlog
+			types.AuditLogPartIntermediaryResponseBody,
 			types.AuditLogPartAuditLogTrailer,
 		},
-		AuditLogFormat: "Native",
-		Logger:         logger,
-		ArgumentLimit:  1000,
+		AuditLogFormat:          "Native",
+		Logger:                  logger,
+		ArgumentLimit:           1000,
+		LLMClassificationConfig: types.NewClassificationConfig(),
 	}
 
 	if environment.HasAccessToFS {
@@ -425,4 +431,29 @@ func (w *WAF) Validate() error {
 	}
 
 	return nil
+}
+
+// 新增设置WAF.AuditLogWriterConfig
+func (w *WAF) SetAuditLogWriterConfig(conf *plugintypes.AuditLogConfig) error {
+	if ok, err := w.ValidateAuditLogConfig(conf); !ok {
+		return err
+	}
+	w.AuditLogWriterConfig = *conf
+	return nil
+}
+
+// TODO 检查plugintypes.AuditLogConfig配置是否正确
+// 在waapproxy中已经做了检查
+func (w *WAF) ValidateAuditLogConfig(conf *plugintypes.AuditLogConfig) (bool, error) {
+	return true, nil
+}
+
+// 新增用于获取LLM检测结果分类配置
+func (w *WAF) GetLLMClassificationConfig() *types.ClassificationConfig {
+	return w.LLMClassificationConfig
+}
+
+// 新增用于批量设置LLM检测结果分类配置
+func (w *WAF) SetLLMClassificationConfig(config *types.ClassificationConfig) {
+	w.LLMClassificationConfig = config
 }

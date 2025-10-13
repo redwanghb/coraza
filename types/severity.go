@@ -24,45 +24,61 @@ import (
 // log the error or not
 type RuleSeverity int
 
+// const (
+// 	// RuleSeverityEmergency represents the emergency severity
+// 	// We "shold" exit the process immediately
+// 	RuleSeverityEmergency RuleSeverity = 0
+// 	// RuleSeverityAlert represents the alert severity
+// 	RuleSeverityAlert RuleSeverity = 1
+// 	// RuleSeverityCritical represents the critical severity
+// 	RuleSeverityCritical RuleSeverity = 2
+// 	// RuleSeverityError represents the error severity
+// 	RuleSeverityError RuleSeverity = 3
+// 	// RuleSeverityWarning represents the warning severity
+// 	RuleSeverityWarning RuleSeverity = 4
+// 	// RuleSeverityNotice represents the notice severity
+// 	RuleSeverityNotice RuleSeverity = 5
+// 	// RuleSeverityInfo represents the info severity
+// 	RuleSeverityInfo RuleSeverity = 6
+// 	// RuleSeverityDebug represents the debug severity
+// 	RuleSeverityDebug RuleSeverity = 7
+// )
+
+// 重新定义威胁等级
 const (
-	// RuleSeverityEmergency represents the emergency severity
-	// We "shold" exit the process immediately
-	RuleSeverityEmergency RuleSeverity = 0
-	// RuleSeverityAlert represents the alert severity
-	RuleSeverityAlert RuleSeverity = 1
-	// RuleSeverityCritical represents the critical severity
-	RuleSeverityCritical RuleSeverity = 2
-	// RuleSeverityError represents the error severity
-	RuleSeverityError RuleSeverity = 3
-	// RuleSeverityWarning represents the warning severity
-	RuleSeverityWarning RuleSeverity = 4
-	// RuleSeverityNotice represents the notice severity
-	RuleSeverityNotice RuleSeverity = 5
-	// RuleSeverityInfo represents the info severity
-	RuleSeverityInfo RuleSeverity = 6
-	// RuleSeverityDebug represents the debug severity
-	RuleSeverityDebug RuleSeverity = 7
+	RuleSeverityUnknown  RuleSeverity = 0
+	RuleSeverityCritical RuleSeverity = 5
+	RuleSeverityHigh     RuleSeverity = 4
+	RuleSeverityMedium   RuleSeverity = 3
+	RuleSeverityLow      RuleSeverity = 2
+	RuleSeverityInfo     RuleSeverity = 1
 )
 
 // String returns the string representation of the severity
 func (rs RuleSeverity) String() string {
 	switch rs {
-	case RuleSeverityEmergency:
-		return "emergency"
-	case RuleSeverityAlert:
-		return "alert"
+	// case RuleSeverityEmergency:
+	// 	return "emergency"
+	// case RuleSeverityAlert:
+	// 	return "alert"
 	case RuleSeverityCritical:
 		return "critical"
-	case RuleSeverityError:
-		return "error"
-	case RuleSeverityWarning:
-		return "warning"
-	case RuleSeverityNotice:
-		return "notice"
+	// case RuleSeverityError:
+	// 	return "error"
+	// case RuleSeverityWarning:
+	// 	return "warning"
+	// case RuleSeverityNotice:
+	// 	return "notice"
 	case RuleSeverityInfo:
 		return "info"
-	case RuleSeverityDebug:
-		return "debug"
+	// case RuleSeverityDebug:
+	// 	return "debug"
+	case RuleSeverityHigh:
+		return "high"
+	case RuleSeverityMedium:
+		return "medium"
+	case RuleSeverityLow:
+		return "low"
 	}
 	return "unknown"
 }
@@ -79,28 +95,34 @@ func ParseRuleSeverity(input string) (RuleSeverity, error) {
 		if err != nil {
 			return RuleSeverity(0), err
 		}
-		if s < 0 || s > 7 {
+		if s < 0 || s > 5 {
 			return RuleSeverity(0), fmt.Errorf("invalid severity: %d", s)
 		}
 		return RuleSeverity(s), nil
 	}
 	switch strings.ToLower(input) {
-	case "emergency":
-		return RuleSeverityEmergency, nil
-	case "alert":
-		return RuleSeverityAlert, nil
+	// case "emergency":
+	// 	return RuleSeverityEmergency, nil
+	// case "alert":
+	// 	return RuleSeverityAlert, nil
 	case "critical":
 		return RuleSeverityCritical, nil
-	case "error":
-		return RuleSeverityError, nil
-	case "warning":
-		return RuleSeverityWarning, nil
-	case "notice":
-		return RuleSeverityNotice, nil
+	// case "error":
+	// 	return RuleSeverityError, nil
+	// case "warning":
+	// 	return RuleSeverityWarning, nil
+	// case "notice":
+	// 	return RuleSeverityNotice, nil
 	case "info":
 		return RuleSeverityInfo, nil
-	case "debug":
-		return RuleSeverityDebug, nil
+	// case "debug":
+	// 	return RuleSeverityDebug, nil
+	case "high":
+		return RuleSeverityHigh, nil
+	case "medium":
+		return RuleSeverityMedium, nil
+	case "low":
+		return RuleSeverityLow, nil
 	}
 	return 0, fmt.Errorf("unknown severity: %s", input)
 }

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/experimental/plugins/plugintypes"
+	"waap/types"
 )
 
 func checkLine(t *testing.T, lines []string, index int, expected string) {

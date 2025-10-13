@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/collections"
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	utils "github.com/redwanghb/coraza/v3/internal/strings"
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/debuglog"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/collections"
+	"waap/internal/corazawaf"
+	utils "waap/internal/strings"
+	"waap/types"
+	"waap/types/variables"
 )
 
 type ctlFunctionType int

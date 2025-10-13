@@ -1,6 +1,6 @@
-module github.com/redwanghb/coraza/v3
+module waap
 
-go 1.22
+go 1.25.2
 
 // Testing dependencies:
 // - go-mockdns

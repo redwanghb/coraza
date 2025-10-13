@@ -6,7 +6,7 @@ package actions
 import (
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
+	"waap/internal/corazawaf"
 )
 
 func TestLogDataInit(t *testing.T) {

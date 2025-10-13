@@ -6,8 +6,8 @@ package corazawaf
 import (
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/types"
+	"waap/types/variables"
 )
 
 type inferredPhases byte

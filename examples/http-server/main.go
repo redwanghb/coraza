@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3"
-	txhttp "github.com/redwanghb/coraza/v3/http"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap"
+	txhttp "waap/http"
+	"waap/types"
 )
 
 func exampleHandler(w http.ResponseWriter, req *http.Request) {

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/internal/variables"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/internal/variables"
+	"waap/types"
 )
 
 func TestErrorLogMessagesSizesNoExtraRuleDetails(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3"
+	"waap"
 )
 
 func TestRawRequests(t *testing.T) {

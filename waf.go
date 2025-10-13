@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redwanghb/coraza/v3/experimental"
-	"github.com/redwanghb/coraza/v3/internal/corazawaf"
-	"github.com/redwanghb/coraza/v3/internal/environment"
-	"github.com/redwanghb/coraza/v3/internal/seclang"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/experimental"
+	"waap/internal/corazawaf"
+	"waap/internal/environment"
+	"waap/internal/seclang"
+	"waap/types"
 )
 
 // WAF instance is used to store configurations and rules
@@ -32,6 +32,7 @@ type WAF interface {
 func NewWAF(config WAFConfig) (WAF, error) {
 	c := config.(*wafConfig)
 
+	// 默认auditlog打印到serial,auditlog.GetWriter("serial")
 	waf := corazawaf.NewWAF()
 
 	if environment.HasAccessToFS {
@@ -67,8 +68,16 @@ func NewWAF(config WAFConfig) (WAF, error) {
 		}
 	}
 
+	// 这里会读取WAFConfig中的auditlog配置，做对应的设置, 这里会根据WAFConfig.auditlog修改waf.auditLogWriter
 	populateAuditLog(waf, c)
 
+	// TODO 设置WAF.AuditLogWriterConfig
+	waf.SetAuditLogWriterConfig(c.auditLogWriterConfig)
+
+	// 设置WAF.LLMClassificationConfig
+	waf.SetLLMClassificationConfig(c.llmClassificationConfig)
+
+	// 基于waf.auditLogWriter和auditLogWriterConfig初始化auditLogWriter
 	if err := waf.InitAuditLogWriter(); err != nil {
 		return nil, fmt.Errorf("invalid WAF config from audit log: %w", err)
 	}

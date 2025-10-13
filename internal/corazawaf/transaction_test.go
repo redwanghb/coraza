@@ -13,15 +13,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/collection"
-	"github.com/redwanghb/coraza/v3/debuglog"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/macro"
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/redwanghb/coraza/v3/internal/collections"
-	"github.com/redwanghb/coraza/v3/internal/corazarules"
-	utils "github.com/redwanghb/coraza/v3/internal/strings"
-	"github.com/redwanghb/coraza/v3/types"
-	"github.com/redwanghb/coraza/v3/types/variables"
+	"waap/collection"
+	"waap/debuglog"
+	"waap/experimental/plugins/macro"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/collections"
+	"waap/internal/corazarules"
+	utils "waap/internal/strings"
+	"waap/types"
+	"waap/types/variables"
 )
 
 func TestTxSettersMultipart(t *testing.T) {

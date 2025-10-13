@@ -7,7 +7,7 @@
 
 package auditlog
 
-import "github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+import "waap/experimental/plugins/plugintypes"
 
 type noopFormatter struct{}
 

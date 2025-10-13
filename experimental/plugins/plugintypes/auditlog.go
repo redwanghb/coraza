@@ -7,8 +7,8 @@ import (
 	"io/fs"
 	"strconv"
 
-	"github.com/redwanghb/coraza/v3/internal/collections"
-	"github.com/redwanghb/coraza/v3/types"
+	"waap/internal/collections"
+	"waap/types"
 )
 
 // AuditLog represents the main struct for audit log data
@@ -157,17 +157,14 @@ func (a *AuditLogConfig) GetDBType() string {
 
 // 新增DB结构体，用于存储数据库信息，将auditlog写入数据库
 type DB struct {
-	name     string
-	user     string //数据库用户名
-	password string //数据库密码
-	address  string //数据库地址
-	port     int    //数据库服务端口号
-	tls      bool   //是否开启tls
-	dbType   string //数据库类型
-}
-
-func (d *DB) Name() string {
-	return d.name
+	user      string //数据库用户名
+	password  string //数据库密码
+	address   string //数据库地址
+	port      int    //数据库服务端口号
+	tls       bool   //是否开启tls
+	dbType    string //数据库类型
+	dbName    string //库名
+	tableName string //表名
 }
 
 func (d *DB) User() string {
@@ -194,6 +191,14 @@ func (d *DB) DBType() string {
 	return d.dbType
 }
 
+func (d *DB) DBName() string {
+	return d.dbName
+}
+
+func (d *DB) TableName() string {
+	return d.tableName
+}
+
 func NewDB(opts ...DBOption) *DB {
 	db := new(DB)
 	for _, opt := range opts {
@@ -203,12 +208,6 @@ func NewDB(opts ...DBOption) *DB {
 }
 
 type DBOption func(*DB)
-
-func WithName(name string) DBOption {
-	return func(d *DB) {
-		d.name = name
-	}
-}
 
 func WithUser(user string) DBOption {
 	return func(d *DB) {

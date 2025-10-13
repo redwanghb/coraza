@@ -6,7 +6,7 @@ package operators
 import (
 	"testing"
 
-	"github.com/redwanghb/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func TestEq(t *testing.T) {
