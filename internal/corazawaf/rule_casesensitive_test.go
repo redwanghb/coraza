@@ -8,7 +8,7 @@ package corazawaf
 import (
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/types/variables"
+	"waap/types/variables"
 )
 
 func TestCaseSensitiveArgsVariableKeys(t *testing.T) {

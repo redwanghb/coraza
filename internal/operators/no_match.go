@@ -6,7 +6,7 @@
 package operators
 
 import (
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 type noMatch struct{}

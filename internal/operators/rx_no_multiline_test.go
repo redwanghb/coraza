@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/corazawaf"
 )
 
 func TestRx(t *testing.T) {

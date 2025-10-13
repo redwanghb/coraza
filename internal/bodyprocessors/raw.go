@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/collections"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/collections"
 )
 
 type rawBodyProcessor struct {

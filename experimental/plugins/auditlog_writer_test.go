@@ -13,9 +13,10 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/corazawaf/coraza/v3"
-	"github.com/corazawaf/coraza/v3/experimental/plugins"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins"
+	"waap/experimental/plugins/plugintypes"
+
+	coraza "waap"
 )
 
 type urlWriter struct {

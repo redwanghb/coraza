@@ -1,6 +1,6 @@
-module github.com/corazawaf/coraza/v3
+module waap
 
-go 1.23.0
+go 1.25.2
 
 // Testing dependencies:
 // - go-mockdns
@@ -51,4 +51,3 @@ require (
 	google.golang.org/protobuf v1.35.1 // indirect
 )
 
-retract v3.2.2

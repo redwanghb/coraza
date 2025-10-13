@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 var SyslogDialer = new(syslogDialerStub)

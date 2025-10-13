@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/corazawaf/coraza/v3/experimental"
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
-	"github.com/corazawaf/coraza/v3/internal/environment"
-	"github.com/corazawaf/coraza/v3/internal/seclang"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/experimental"
+	"waap/internal/corazawaf"
+	"waap/internal/environment"
+	"waap/internal/seclang"
+	"waap/types"
 )
 
 // WAF instance is used to store configurations and rules

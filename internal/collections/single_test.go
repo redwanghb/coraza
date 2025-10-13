@@ -6,7 +6,7 @@ package collections
 import (
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/types/variables"
+	"waap/types/variables"
 )
 
 func TestSingle(t *testing.T) {

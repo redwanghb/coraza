@@ -10,13 +10,13 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/corazawaf/coraza/v3/debuglog"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/macro"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/corazarules"
-	"github.com/corazawaf/coraza/v3/internal/memoize"
-	"github.com/corazawaf/coraza/v3/types"
-	"github.com/corazawaf/coraza/v3/types/variables"
+	"waap/debuglog"
+	"waap/experimental/plugins/macro"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/corazarules"
+	"waap/internal/memoize"
+	"waap/types"
+	"waap/types/variables"
 )
 
 // ruleActionParams is used as a wrapper to store the action name

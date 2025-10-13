@@ -8,7 +8,7 @@ package seclang
 import (
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
+	"waap/internal/corazawaf"
 )
 
 func TestCaseSensitiveRuleMatchRegex(t *testing.T) {

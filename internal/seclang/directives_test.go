@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
-	"github.com/corazawaf/coraza/v3/internal/environment"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/internal/corazawaf"
+	"waap/internal/environment"
+	"waap/types"
 )
 
 func Test_NonImplementedDirective(t *testing.T) {

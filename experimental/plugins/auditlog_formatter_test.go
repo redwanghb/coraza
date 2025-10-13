@@ -9,9 +9,10 @@
 package plugins_test
 
 import (
-	"github.com/corazawaf/coraza/v3"
-	"github.com/corazawaf/coraza/v3/experimental/plugins"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins"
+	"waap/experimental/plugins/plugintypes"
+
+	coraza "waap"
 )
 
 type testFormatter struct{}

@@ -18,9 +18,9 @@ import (
 
 	"github.com/kaptinlin/jsonschema"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/memoize"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/memoize"
+	"waap/types"
 )
 
 type validateSchema struct {

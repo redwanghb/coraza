@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/corazawaf/coraza/v3/http/e2e"
+	"waap/http/e2e"
 )
 
 // Flags:

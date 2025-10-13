@@ -10,8 +10,8 @@ import (
 
 	ahocorasick "github.com/petar-dambovaliev/aho-corasick"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/memoize"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/memoize"
 )
 
 func newPMFromDataset(options plugintypes.OperatorOptions) (plugintypes.Operator, error) {

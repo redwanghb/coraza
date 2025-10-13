@@ -6,7 +6,7 @@ package coraza
 import (
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/types"
 )
 
 func TestConfigRulesImmutable(t *testing.T) {

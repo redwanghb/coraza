@@ -15,16 +15,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/corazawaf/coraza/v3/collection"
-	"github.com/corazawaf/coraza/v3/debuglog"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/macro"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/collections"
-	"github.com/corazawaf/coraza/v3/internal/corazarules"
-	"github.com/corazawaf/coraza/v3/internal/environment"
-	utils "github.com/corazawaf/coraza/v3/internal/strings"
-	"github.com/corazawaf/coraza/v3/types"
-	"github.com/corazawaf/coraza/v3/types/variables"
+	"waap/collection"
+	"waap/debuglog"
+	"waap/experimental/plugins/macro"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/collections"
+	"waap/internal/corazarules"
+	"waap/internal/environment"
+	utils "waap/internal/strings"
+	"waap/types"
+	"waap/types/variables"
 )
 
 func TestTxSettersMultipart(t *testing.T) {

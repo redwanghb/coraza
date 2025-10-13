@@ -6,9 +6,9 @@ package auditlog
 import (
 	"encoding/json"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/collections"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/collections"
+	"waap/types"
 )
 
 // Log represents the main struct for audit log data

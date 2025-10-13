@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
+	"waap/experimental/plugins/plugintypes"
 )
 
 func TestInspectFileExitCode(t *testing.T) {

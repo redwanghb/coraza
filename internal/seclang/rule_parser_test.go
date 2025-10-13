@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/debuglog"
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/debuglog"
+	"waap/internal/corazawaf"
+	"waap/types"
 )
 
 func TestInvalidRule(t *testing.T) {

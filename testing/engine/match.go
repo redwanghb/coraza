@@ -4,7 +4,7 @@
 package engine
 
 import (
-	"github.com/corazawaf/coraza/v3/testing/profile"
+	"waap/testing/profile"
 )
 
 var _ = profile.RegisterProfile(profile.Profile{

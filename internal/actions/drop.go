@@ -4,8 +4,8 @@
 package actions
 
 import (
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/experimental/plugins/plugintypes"
+	"waap/types"
 )
 
 // Action Group: Disruptive

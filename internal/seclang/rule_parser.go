@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/corazawaf/coraza/v3/debuglog"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	actionsmod "github.com/corazawaf/coraza/v3/internal/actions"
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
-	"github.com/corazawaf/coraza/v3/internal/operators"
-	utils "github.com/corazawaf/coraza/v3/internal/strings"
-	"github.com/corazawaf/coraza/v3/types"
-	"github.com/corazawaf/coraza/v3/types/variables"
+	"waap/debuglog"
+	"waap/experimental/plugins/plugintypes"
+	actionsmod "waap/internal/actions"
+	"waap/internal/corazawaf"
+	"waap/internal/operators"
+	utils "waap/internal/strings"
+	"waap/types"
+	"waap/types/variables"
 )
 
 var defaultActionsPhase2 = "phase:2,log,auditlog,pass"

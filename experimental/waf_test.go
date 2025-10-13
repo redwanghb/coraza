@@ -6,8 +6,8 @@ package experimental_test
 import (
 	"fmt"
 
-	"github.com/corazawaf/coraza/v3"
-	"github.com/corazawaf/coraza/v3/experimental"
+	"waap"
+	"waap/experimental"
 )
 
 func ExampleWAFWithOptions_NewTransactionWithOptions() {

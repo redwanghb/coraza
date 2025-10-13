@@ -14,13 +14,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/corazawaf/coraza/v3/debuglog"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/internal/auditlog"
-	"github.com/corazawaf/coraza/v3/internal/environment"
-	stringutils "github.com/corazawaf/coraza/v3/internal/strings"
-	"github.com/corazawaf/coraza/v3/internal/sync"
-	"github.com/corazawaf/coraza/v3/types"
+	"waap/debuglog"
+	"waap/experimental/plugins/plugintypes"
+	"waap/internal/auditlog"
+	"waap/internal/environment"
+	stringutils "waap/internal/strings"
+	"waap/internal/sync"
+	"waap/types"
 )
 
 // WAF instance is used to store configurations and rules

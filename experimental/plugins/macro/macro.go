@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/corazawaf/coraza/v3/collection"
-	"github.com/corazawaf/coraza/v3/experimental/plugins/plugintypes"
-	"github.com/corazawaf/coraza/v3/types/variables"
+	"waap/collection"
+	"waap/experimental/plugins/plugintypes"
+	"waap/types/variables"
 )
 
 type Macro interface {

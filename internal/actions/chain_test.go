@@ -6,7 +6,7 @@ package actions
 import (
 	"testing"
 
-	"github.com/corazawaf/coraza/v3/internal/corazawaf"
+	"waap/internal/corazawaf"
 )
 
 func TestChainInit(t *testing.T) {
